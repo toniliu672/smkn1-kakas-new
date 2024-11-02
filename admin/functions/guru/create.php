@@ -1,5 +1,4 @@
 <?php
-// admin/functions/guru/create.php
 function createGuru($pdo, $data, $foto = null)
 {
     try {
@@ -59,8 +58,9 @@ function createGuru($pdo, $data, $foto = null)
 
         // Insert data guru
         $query = "INSERT INTO guru (id, nip, nama_lengkap, email, kontak, foto, alamat, 
-                 tanggal_bergabung, status, status_aktif) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                 tanggal_bergabung, tanggal_keluar, alasan_keluar, keterangan_keluar, 
+                 status, status_aktif) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $pdo->prepare($query);
         $stmt->execute([
@@ -72,8 +72,11 @@ function createGuru($pdo, $data, $foto = null)
             $fotoPath,
             $data['alamat'] ?? null,
             $data['tanggal_bergabung'],
+            $data['tanggal_keluar'] ?? null,
+            $data['alasan_keluar'] ?? null,
+            $data['keterangan_keluar'] ?? null,
             $data['status'],
-            'aktif'
+            $data['status_aktif'] ?? 'aktif'
         ]);
 
         // Handle mata pelajaran yang diajar

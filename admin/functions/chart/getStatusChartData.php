@@ -1,5 +1,5 @@
 <?php
-// admin/functions/chart/getStatusGuruChartData.php
+// admin/functions/chart/getStatusChartData.php
 require_once '../../../config/koneksi.php';
 
 header('Content-Type: application/json');

@@ -1,48 +1,36 @@
 <?php
 // admin/functions/guru/read.php
-function getGuru($pdo, $page = 1, $limit = 10, $search = [])
+// admin/functions/guru/read.php
+function getGuru($pdo, $page = 1, $limit = 10, $search = '')
 {
     try {
         $offset = ($page - 1) * $limit;
-        $where = ["1=1"];
         $params = [];
+        $where = ["1=1"];
 
-        if (!empty($search['nama'])) {
-            $where[] = "nama_lengkap LIKE ?";
-            $params[] = "%{$search['nama']}%";
+        // Tambahkan kondisi pencarian jika ada
+        if (!empty($search)) {
+            $where[] = "(nama_lengkap LIKE ? OR nip LIKE ?)";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
         }
 
-        if (!empty($search['nip'])) {
-            $where[] = "nip = ?";
-            $params[] = $search['nip'];
-        }
+        $whereClause = implode(" AND ", $where);
 
-        if (!empty($search['status']) && $search['status'] !== 'Semua') {
-            $where[] = "status = ?";
-            $params[] = $search['status'];
-        }
-
-        if (!empty($search['status_aktif']) && $search['status_aktif'] !== 'Semua') {
-            $where[] = "status_aktif = ?";
-            $params[] = $search['status_aktif'];
-        }
-
-        $whereClause = "WHERE " . implode(" AND ", $where);
-
-        // Perbaikan query dengan LIMIT langsung di string query
+        // Query untuk data - PERBAIKAN: Hapus quotes di LIMIT OFFSET
         $query = "SELECT id, nip, nama_lengkap, kontak, status, status_aktif 
                  FROM guru 
-                 {$whereClause} 
+                 WHERE {$whereClause}
                  ORDER BY created_at DESC 
-                 LIMIT $limit OFFSET $offset";
+                 LIMIT $limit OFFSET $offset";  // <- Perbaikan di sini
 
         $stmt = $pdo->prepare($query);
         $stmt->execute($params);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Query count tanpa LIMIT/OFFSET
-        $queryCount = "SELECT COUNT(*) as total FROM guru {$whereClause}";
-        $stmtCount = $pdo->prepare($queryCount);
+        // Query untuk total (tidak perlu diubah karena tidak ada LIMIT/OFFSET)
+        $countQuery = "SELECT COUNT(*) as total FROM guru WHERE {$whereClause}";
+        $stmtCount = $pdo->prepare($countQuery);
         $stmtCount->execute($params);
         $total = $stmtCount->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -59,7 +47,8 @@ function getGuru($pdo, $page = 1, $limit = 10, $search = [])
     }
 }
 
-function searchGuruGlobal($pdo, $keyword) {
+function searchGuruGlobal($pdo, $keyword)
+{
     try {
         $searchConditions = [];
         $params = [];

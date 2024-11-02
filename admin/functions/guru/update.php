@@ -1,6 +1,7 @@
 <?php
 // admin/functions/guru/update.php 
-function updateGuru($pdo, $id, $data, $foto = null) {
+function updateGuru($pdo, $id, $data, $foto = null)
+{
     try {
         // Validasi NIP jika diubah
         if (!empty($data['nip'])) {
@@ -12,20 +13,20 @@ function updateGuru($pdo, $id, $data, $foto = null) {
         }
 
         $fotoPath = null;
-        
+
         // Handle upload foto baru jika ada
         if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
             $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
             $maxSize = 10 * 1024 * 1024; // 10MB
-            
+
             if (!in_array($foto['type'], $allowedTypes)) {
                 throw new Exception("Tipe file tidak diizinkan. Hanya JPG, JPEG, dan PNG yang diperbolehkan.");
             }
-            
+
             if ($foto['size'] > $maxSize) {
                 throw new Exception("Ukuran file terlalu besar. Maksimal 10MB.");
             }
-            
+
             // Hapus foto lama jika ada
             $stmt = $pdo->prepare("SELECT foto FROM guru WHERE id = ?");
             $stmt->execute([$id]);
@@ -33,10 +34,10 @@ function updateGuru($pdo, $id, $data, $foto = null) {
             if ($oldFoto && file_exists("../../../" . $oldFoto)) {
                 unlink("../../../" . $oldFoto);
             }
-            
+
             $extension = pathinfo($foto['name'], PATHINFO_EXTENSION);
             $fotoPath = 'uploads/guru/' . $id . '.' . $extension;
-            
+
             if (!move_uploaded_file($foto['tmp_name'], "../../../" . $fotoPath)) {
                 throw new Exception("Gagal mengupload foto.");
             }
@@ -51,8 +52,17 @@ function updateGuru($pdo, $id, $data, $foto = null) {
 
         // Daftar field yang bisa diupdate
         $allowedFields = [
-            'nip', 'nama_lengkap', 'email', 'kontak', 'alamat', 
-            'tanggal_bergabung', 'status', 'status_aktif'
+            'nip',
+            'nama_lengkap',
+            'email',
+            'kontak',
+            'alamat',
+            'tanggal_bergabung',
+            'tanggal_keluar',
+            'alasan_keluar',
+            'keterangan_keluar',
+            'status',
+            'status_aktif'
         ];
 
         foreach ($allowedFields as $field) {
@@ -61,12 +71,12 @@ function updateGuru($pdo, $id, $data, $foto = null) {
                 $params[] = $data[$field];
             }
         }
-        
+
         if ($fotoPath) {
             $setClause[] = "foto = ?";
             $params[] = $fotoPath;
         }
-        
+
         $params[] = $id; // untuk WHERE clause
 
         $query = "UPDATE guru SET " . implode(", ", $setClause) . " WHERE id = ?";
@@ -78,7 +88,7 @@ function updateGuru($pdo, $id, $data, $foto = null) {
             // Hapus relasi yang ada
             $stmt = $pdo->prepare("DELETE FROM guru_mata_pelajaran WHERE id_guru = ?");
             $stmt->execute([$id]);
-            
+
             // Insert relasi baru
             if (!empty($data['mata_pelajaran'])) {
                 $stmtMapel = $pdo->prepare("INSERT INTO guru_mata_pelajaran (id_guru, id_mata_pelajaran) VALUES (?, ?)");
@@ -90,7 +100,6 @@ function updateGuru($pdo, $id, $data, $foto = null) {
 
         $pdo->commit();
         return ['status' => 'success', 'message' => 'Data guru berhasil diperbarui'];
-
     } catch (Exception $e) {
         $pdo->rollBack();
         // Hapus foto baru jika ada error

@@ -3,13 +3,11 @@
 require_once '../../config/koneksi.php';
 require_once '../../auth/auth_check.php';
 require_once '../functions/guru/index.php';
-require_once '../functions/mapel/read.php';  // hanya untuk getAllMapel()
+require_once '../functions/mapel/read.php';
 check_login();
 
 $page_title = "Data Guru - SMKN 1 Kakas";
 $is_admin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
-
-// Dapatkan daftar mapel untuk dropdown
 $daftarMapel = getAllMapel($pdo);
 ?>
 
@@ -23,8 +21,7 @@ $daftarMapel = getAllMapel($pdo);
     <div class="container mx-auto px-4 py-10">
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="py-2">
-                <button
-                    class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                <button class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
                     <i class="fas fa-arrow-left mr-2"></i><a href="./dashboard.php">Kembali</a>
                 </button>
             </div>
@@ -38,19 +35,18 @@ $daftarMapel = getAllMapel($pdo);
                         <a href="./dataMapel.php" class="bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded transition duration-300">
                             Data Mapel
                         </a>
-                    <?php endif; ?>
-                    <a href="./printGuru.php" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition duration-300">
-                        Cetak Data
-                    </a>
+                        <a href="./printGuru.php" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition duration-300">
+                            Cetak Data
+                        </a>
                     </div>
-
+                <?php endif; ?>
             </div>
-
 
             <!-- Filter dan Pencarian -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <input type="text" id="searchInput" placeholder="Cari nama atau NIP..."
+                    <input type="text" id="searchInput"
+                        placeholder="Cari nama atau NIP guru..."
                         class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
                 <div>
@@ -91,6 +87,7 @@ $daftarMapel = getAllMapel($pdo);
                             <th class="px-4 py-3 text-left">Kontak</th>
                             <th class="px-4 py-3 text-left">Status</th>
                             <th class="px-4 py-3 text-left">Status Aktif</th>
+                            <th class="px-4 py-3 text-left">Alasan Keluar</th>
                             <th class="px-4 py-3 text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -98,9 +95,6 @@ $daftarMapel = getAllMapel($pdo);
                         <!-- Data akan diisi oleh JavaScript -->
                     </tbody>
                 </table>
-            </div>
-            <div id="debugInfo" class="mt-4 p-4 bg-gray-100 rounded hidden">
-                <pre id="debugOutput"></pre>
             </div>
 
             <!-- Pagination -->
@@ -128,24 +122,9 @@ $daftarMapel = getAllMapel($pdo);
         </div>
     </div>
 
-    <!-- Hidden input untuk role -->
     <input type="hidden" id="userRole" value="<?php echo htmlspecialchars($_SESSION['user_role']); ?>">
 
     <script src="../javascript/guruScript.js"></script>
-    <script>
-        $(document).ready(function() {
-            if (window.location.search.includes('debug=true')) {
-                $('#debugInfo').removeClass('hidden');
-            }
-
-            // Tambahkan fungsi debug di guruScript.js
-            window.debugResponse = function(response) {
-                if ($('#debugInfo').length) {
-                    $('#debugOutput').text(JSON.stringify(response, null, 2));
-                }
-            }
-        });
-    </script>
 </body>
 
 </html>

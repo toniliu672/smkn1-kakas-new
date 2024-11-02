@@ -37,7 +37,7 @@ $is_admin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
             <!-- Filter dan Pencarian -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <input type="text" id="searchInput" placeholder="Cari nama atau kode..."
+                    <input type="text" id="searchInput" placeholder="Cari nama"
                         class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
                 <div>

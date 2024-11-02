@@ -86,6 +86,11 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
                             <span class="px-2 py-1 rounded text-sm <?= $guru['status_aktif'] === 'aktif' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800' ?> print:text-xs">
                                 <?= ucfirst(htmlspecialchars($guru['status_aktif'])) ?>
                             </span>
+                            <?php if ($guru['status_aktif'] === 'non-aktif' && $guru['alasan_keluar']): ?>
+                                <span class="px-2 py-1 rounded text-sm bg-gray-100 text-gray-800 print:text-xs">
+                                    <?= ucfirst(str_replace('_', ' ', htmlspecialchars($guru['alasan_keluar']))) ?>
+                                </span>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -128,14 +133,34 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
                                 <td class="py-2 text-gray-600 print:py-1">:</td>
                                 <td class="py-2 text-gray-900 print:py-1"><?= formatTanggalIndonesia($guru['tanggal_bergabung']) ?></td>
                             </tr>
+                            <?php if ($guru['status_aktif'] === 'non-aktif'): ?>
+                                <tr>
+                                    <td class="py-2 text-gray-600 print:py-1">Tanggal Keluar</td>
+                                    <td class="py-2 text-gray-600 print:py-1">:</td>
+                                    <td class="py-2 text-gray-900 print:py-1"><?= formatTanggalIndonesia($guru['tanggal_keluar']) ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 text-gray-600 print:py-1">Alasan Keluar</td>
+                                    <td class="py-2 text-gray-600 print:py-1">:</td>
+                                    <td class="py-2 text-gray-900 print:py-1">
+                                        <?= ucfirst(str_replace('_', ' ', htmlspecialchars($guru['alasan_keluar']))) ?>
+                                        <?php if ($guru['keterangan_keluar']): ?>
+                                            <br>
+                                            <span class="text-gray-600 text-sm">
+                                                Keterangan: <?= htmlspecialchars($guru['keterangan_keluar']) ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                             <tr>
                                 <td class="py-2 text-gray-600 print:py-1">Lama Bekerja</td>
                                 <td class="py-2 text-gray-600 print:py-1">:</td>
                                 <td class="py-2 text-gray-900 print:py-1">
                                     <?php
                                     $tanggal_bergabung = new DateTime($guru['tanggal_bergabung']);
-                                    $sekarang = new DateTime();
-                                    $interval = $tanggal_bergabung->diff($sekarang);
+                                    $tanggal_akhir = $guru['status_aktif'] === 'non-aktif' ? new DateTime($guru['tanggal_keluar']) : new DateTime();
+                                    $interval = $tanggal_bergabung->diff($tanggal_akhir);
                                     echo $interval->y . " tahun " . $interval->m . " bulan";
                                     ?>
                                 </td>
@@ -145,7 +170,9 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
 
                     <!-- Mata Pelajaran -->
                     <div>
-                        <h3 class="font-semibold text-gray-800 mb-4 print:text-sm print:mb-2 print:font-bold">Mata Pelajaran yang Diajar</h3>
+                        <h3 class="font-semibold text-gray-800 mb-4 print:text-sm print:mb-2 print:font-bold">
+                            <?= $guru['status_aktif'] === 'aktif' ? 'Mata Pelajaran yang Diajar' : 'Mata Pelajaran yang Pernah Diajar' ?>
+                        </h3>
                         <?php if (!empty($guru['mata_pelajaran'])): ?>
                             <div class="flex flex-wrap gap-2">
                                 <?php foreach ($guru['mata_pelajaran'] as $mapel): ?>
@@ -158,17 +185,10 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
                                 <?php endforeach; ?>
                             </div>
                         <?php else: ?>
-                            <p class="text-gray-500 italic print:text-sm">Belum ada mata pelajaran yang ditugaskan</p>
+                            <p class="text-gray-500 italic print:text-sm">Tidak ada data mata pelajaran</p>
                         <?php endif; ?>
                     </div>
                 </div>
-
-                <!-- Waktu Update -->
-                <!-- <div class="mt-6 pt-4 border-t border-gray-200 print:mt-4 print:pt-2">
-                    <p class="text-sm text-gray-500 print:text-xs">
-                        Terakhir diperbarui: <?= date('d F Y H:i', strtotime($guru['updated_at'])) ?>
-                    </p>
-                </div> -->
             </div>
         <?php endif; ?>
     </div>
@@ -220,18 +240,6 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
                 margin-bottom: 0.8em !important;
                 color: black !important;
                 font-size: 14pt !important;
-            }
-
-            div {
-                background: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                box-shadow: none !important;
-                border: none !important;
-            }
-
-            .print\:mb-4 {
-                margin-bottom: 2em !important;
             }
         }
     </style>

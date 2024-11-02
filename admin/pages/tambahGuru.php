@@ -6,7 +6,7 @@ require_once '../functions/mapel/read.php';  // untuk getAllMapel()
 check_admin();  // memastikan hanya admin yang bisa akses
 
 $page_title = "Tambah Data Guru - SMKN 1 Kakas";
-$daftarMapel = getAllMapel($pdo);  // ambil daftar mata pelajaran untuk dropdown
+$daftarMapel = getAllMapel($pdo);
 ?>
 
 <!DOCTYPE html>
@@ -27,6 +27,7 @@ $daftarMapel = getAllMapel($pdo);  // ambil daftar mata pelajaran untuk dropdown
 
             <form id="formTambahGuru" action="../functions/guru/index.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="tambahGuru">
+                <input type="hidden" name="status_aktif" value="aktif">
 
                 <!-- Data Pribadi -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -63,6 +64,28 @@ $daftarMapel = getAllMapel($pdo);  // ambil daftar mata pelajaran untuk dropdown
                         <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Bergabung *</label>
                         <input type="date" name="tanggal_bergabung" required class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500">
                     </div>
+
+                    <!-- Status Keluar (Disabled untuk guru baru) -->
+                    <div class="opacity-50">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Keluar</label>
+                        <input type="date" name="tanggal_keluar" disabled class="w-full px-4 py-2 rounded border bg-gray-100">
+                    </div>
+                    <div class="opacity-50">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Alasan Keluar</label>
+                        <select name="alasan_keluar" disabled class="w-full px-4 py-2 rounded border bg-gray-100">
+                            <option value="">Pilih Alasan</option>
+                            <option value="pensiun">Pensiun</option>
+                            <option value="pindah_tugas">Pindah Tugas</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Keterangan Keluar (Disabled untuk guru baru) -->
+                <div class="mb-6 opacity-50">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan Keluar</label>
+                    <textarea name="keterangan_keluar" disabled rows="3"
+                        class="w-full px-4 py-2 rounded border bg-gray-100"></textarea>
                 </div>
 
                 <!-- Mata Pelajaran -->
@@ -95,10 +118,10 @@ $daftarMapel = getAllMapel($pdo);  // ambil daftar mata pelajaran untuk dropdown
                 </div>
 
                 <div class="flex justify-end gap-4">
-                    <button type="reset" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100 transition duration-300">
+                    <button type="reset" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">
                         Reset
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition duration-300">
+                    <button type="submit" class="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600">
                         Simpan
                     </button>
                 </div>
@@ -106,11 +129,11 @@ $daftarMapel = getAllMapel($pdo);  // ambil daftar mata pelajaran untuk dropdown
         </div>
     </div>
 
+    <!-- JavaScript tidak berubah -->
     <script>
         $(document).ready(function() {
             $('#formTambahGuru').on('submit', function(e) {
                 e.preventDefault();
-
                 const formData = new FormData(this);
 
                 $.ajax({

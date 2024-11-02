@@ -5,17 +5,14 @@ require_once '../../auth/auth_check.php';
 require_once '../functions/guru/read.php';
 check_login();
 
-// Get filter parameters
 $search = [
     'status' => $_GET['status'] ?? null,
-    'status_aktif' => $_GET['status_aktif'] ?? null
+    'status_aktif' => $_GET['status_aktif'] ?? null,
+    'alasan_keluar' => $_GET['alasan_keluar'] ?? null
 ];
 
-// Get guru data with filters
 $result = getAllGuruForPrint($pdo, $search);
 $guru_data = $result['data'] ?? [];
-
-// Get current date for the report
 $current_date = date('d F Y');
 ?>
 
@@ -43,8 +40,8 @@ $current_date = date('d F Y');
                 display: none !important;
             }
 
-            .page-break {
-                page-break-after: always;
+            .print-only {
+                display: block;
             }
 
             table {
@@ -67,12 +64,6 @@ $current_date = date('d F Y');
         .print-only {
             display: none;
         }
-
-        @media print {
-            .print-only {
-                display: block;
-            }
-        }
     </style>
 </head>
 
@@ -87,16 +78,20 @@ $current_date = date('d F Y');
                 Cetak Data
             </button>
         </div>
-        <?php if ($search['status'] || $search['status_aktif']): ?>
+        <?php if ($search['status'] || $search['status_aktif'] || $search['alasan_keluar']): ?>
             <div class="text-gray-600 mb-4">
                 Filter aktif:
-                <?php if ($search['status']): ?>
-                    <span class="font-semibold">Status: <?php echo htmlspecialchars($search['status']); ?></span>
-                <?php endif; ?>
-                <?php if ($search['status_aktif']): ?>
-                    <?php if ($search['status']) echo " | "; ?>
-                    <span class="font-semibold">Status Aktif: <?php echo htmlspecialchars($search['status_aktif']); ?></span>
-                <?php endif; ?>
+                <?php
+                if ($search['status']) echo "<span class='font-semibold'>Status: " . htmlspecialchars($search['status']) . "</span>";
+                if ($search['status_aktif']) {
+                    if ($search['status']) echo " | ";
+                    echo "<span class='font-semibold'>Status Aktif: " . htmlspecialchars($search['status_aktif']) . "</span>";
+                }
+                if ($search['alasan_keluar']) {
+                    if ($search['status'] || $search['status_aktif']) echo " | ";
+                    echo "<span class='font-semibold'>Alasan Keluar: " . htmlspecialchars(str_replace('_', ' ', $search['alasan_keluar'])) . "</span>";
+                }
+                ?>
             </div>
         <?php endif; ?>
     </div>
@@ -105,14 +100,13 @@ $current_date = date('d F Y');
     <div class="text-center mb-8">
         <h1 class="text-2xl font-bold mb-2">SMK NEGERI 1 KAKAS</h1>
         <h2 class="text-xl font-semibold mb-4">DAFTAR GURU</h2>
-        <?php if ($search['status'] || $search['status_aktif']): ?>
+        <?php if ($search['status'] || $search['status_aktif'] || $search['alasan_keluar']): ?>
             <p class="text-sm mb-2">
-                <?php if ($search['status']): ?>
-                    Status: <?php echo htmlspecialchars($search['status']); ?><br>
-                <?php endif; ?>
-                <?php if ($search['status_aktif']): ?>
-                    Status Aktif: <?php echo htmlspecialchars($search['status_aktif']); ?>
-                <?php endif; ?>
+                <?php
+                if ($search['status']) echo "Status: " . htmlspecialchars($search['status']) . "<br>";
+                if ($search['status_aktif']) echo "Status Aktif: " . htmlspecialchars($search['status_aktif']) . "<br>";
+                if ($search['alasan_keluar']) echo "Alasan Keluar: " . htmlspecialchars(str_replace('_', ' ', $search['alasan_keluar']));
+                ?>
             </p>
         <?php endif; ?>
         <p class="text-sm">Tanggal Cetak: <?php echo $current_date; ?></p>
@@ -126,15 +120,17 @@ $current_date = date('d F Y');
                 <th class="border border-gray-300 px-4 py-2">NIP</th>
                 <th class="border border-gray-300 px-4 py-2">Nama Lengkap</th>
                 <th class="border border-gray-300 px-4 py-2">Status</th>
-                <th class="border border-gray-300 px-4 py-2">Mata Pelajaran</th>
-                <th class="border border-gray-300 px-4 py-2">Kontak</th>
+                <th class="border border-gray-300 px-4 py-2">Status Aktif</th>
                 <th class="border border-gray-300 px-4 py-2">Tanggal Bergabung</th>
+                <th class="border border-gray-300 px-4 py-2">Tanggal Keluar</th>
+                <th class="border border-gray-300 px-4 py-2">Alasan Keluar</th>
+                <th class="border border-gray-300 px-4 py-2">Mata Pelajaran</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($guru_data)): ?>
                 <tr>
-                    <td colspan="7" class="border border-gray-300 px-4 py-2 text-center">Tidak ada data guru</td>
+                    <td colspan="9" class="border border-gray-300 px-4 py-2 text-center">Tidak ada data guru</td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($guru_data as $index => $guru): ?>
@@ -143,6 +139,25 @@ $current_date = date('d F Y');
                         <td class="border border-gray-300 px-4 py-2"><?php echo htmlspecialchars($guru['nip'] ?? '-'); ?></td>
                         <td class="border border-gray-300 px-4 py-2"><?php echo htmlspecialchars($guru['nama_lengkap']); ?></td>
                         <td class="border border-gray-300 px-4 py-2"><?php echo htmlspecialchars($guru['status']); ?></td>
+                        <td class="border border-gray-300 px-4 py-2"><?php echo ucfirst(htmlspecialchars($guru['status_aktif'])); ?></td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <?php echo date('d/m/Y', strtotime($guru['tanggal_bergabung'])); ?>
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <?php echo $guru['tanggal_keluar'] ? date('d/m/Y', strtotime($guru['tanggal_keluar'])) : '-'; ?>
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <?php
+                            if ($guru['alasan_keluar']) {
+                                echo ucfirst(str_replace('_', ' ', htmlspecialchars($guru['alasan_keluar'])));
+                                if ($guru['keterangan_keluar']) {
+                                    echo "<br><small class='text-gray-600'>" . htmlspecialchars($guru['keterangan_keluar']) . "</small>";
+                                }
+                            } else {
+                                echo '-';
+                            }
+                            ?>
+                        </td>
                         <td class="border border-gray-300 px-4 py-2">
                             <?php
                             if (!empty($guru['mata_pelajaran'])) {
@@ -154,17 +169,13 @@ $current_date = date('d F Y');
                             }
                             ?>
                         </td>
-                        <td class="border border-gray-300 px-4 py-2"><?php echo htmlspecialchars($guru['kontak'] ?? '-'); ?></td>
-                        <td class="border border-gray-300 px-4 py-2">
-                            <?php echo date('d/m/Y', strtotime($guru['tanggal_bergabung'])); ?>
-                        </td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
         </tbody>
     </table>
 
-    <!-- Footer -->
+    <!-- Footer (lanjutan) -->
     <div class="mt-8 text-sm print-only">
         <div class="float-right mr-12">
             <p class="mb-16">Kakas, <?php echo $current_date; ?></p>

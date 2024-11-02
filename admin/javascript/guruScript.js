@@ -1,159 +1,146 @@
 // admin/javascript/guruScript.js
 $(document).ready(function () {
   let currentPage = 1;
-  let searchParams = {};
+  let itemsPerPage = 10;
 
-  // Initialize DataTable with Search and Pagination
-  function initializeTable() {
-    loadData();
-
-    // Search input handler
-    $("#searchInput").on(
-      "keyup",
-      debounce(function () {
-        searchParams.nama = $(this).val();
-        currentPage = 1;
-        loadData();
-      }, 500)
-    );
-
-    // Filter handlers
-    $(".filter-select").on("change", function () {
-      searchParams[$(this).data("filter")] = $(this).val();
-      currentPage = 1;
-      loadData();
-    });
-
-    // Pagination handlers
-    $(document).on("click", ".pagination-btn", function () {
-      if (!$(this).hasClass("disabled")) {
-        currentPage = parseInt($(this).data("page"));
-        loadData();
-      }
-    });
-
-    // Items per page handler
-    $("#itemsPerPage").on("change", function () {
-      currentPage = 1;
-      loadData();
-    });
-  }
-
-  // Load Data Function
+  // Fungsi utama untuk memuat data
   function loadData() {
-    const limit = parseInt($("#itemsPerPage").val());
+    const searchTerm = $("#searchInput").val();
 
     $.ajax({
       url: "../functions/guru/",
       type: "POST",
       data: {
         action: "getGuru",
+        search: searchTerm,
         page: currentPage,
-        limit: limit,
-        search: searchParams,
+        limit: itemsPerPage,
       },
       success: function (response) {
-        console.log("Raw response:", response);
-
-        try {
-          const result =
-            typeof response === "string" ? JSON.parse(response) : response;
-          console.log("Parsed response:", result);
-
-          if (result.status === "success") {
-            if (Array.isArray(result.data)) {
-              updateTable(result.data);
-              updatePagination(result.total, limit);
-            } else {
-              showToast("error", "Format data tidak valid");
-            }
-          } else {
-            showToast("error", result.message || "Terjadi kesalahan");
-          }
-        } catch (e) {
-          console.error("Error processing response:", e);
-          showToast("error", "Gagal memproses data: " + e.message);
+        if (response.status === "success") {
+          renderTable(response.data);
+          renderPagination(response.total);
+          $("#totalData").text(response.total);
+        } else {
+          showToast("error", response.message || "Terjadi kesalahan");
         }
       },
       error: function (xhr, status, error) {
-        console.error("AJAX error:", { xhr, status, error });
         showToast("error", "Gagal memuat data: " + error);
       },
     });
   }
 
-  // Update Table Function
-  function updateTable(data) {
+  // Event handler untuk pencarian
+  $("#searchInput").on(
+    "keyup",
+    debounce(function () {
+      currentPage = 1; // Reset ke halaman pertama saat mencari
+      loadData();
+    }, 500)
+  );
+
+  // Event handler untuk pagination
+  $(document).on("click", ".pagination-btn", function () {
+    if (!$(this).hasClass("disabled")) {
+      currentPage = parseInt($(this).data("page"));
+      loadData();
+    }
+  });
+
+  // Event handler untuk items per page
+  $("#itemsPerPage").on("change", function () {
+    itemsPerPage = parseInt($(this).val());
+    currentPage = 1; // Reset ke halaman pertama
+    loadData();
+  });
+
+  // Render tabel
+  function renderTable(data) {
     const tbody = $("#dataTable tbody");
     tbody.empty();
 
-    if (!Array.isArray(data) || data.length === 0) {
+    if (!data || data.length === 0) {
       tbody.append(`
-            <tr>
-                <td colspan="7" class="px-4 py-3 text-center text-gray-500">Tidak ada data</td>
-            </tr>
-        `);
+              <tr>
+                  <td colspan="7" class="px-4 py-3 text-center text-gray-500">
+                      Tidak ada data ditemukan
+                  </td>
+              </tr>
+          `);
       return;
     }
 
     data.forEach((item, index) => {
-      const rowNumber =
-        (currentPage - 1) * parseInt($("#itemsPerPage").val()) + index + 1;
+      const rowNumber = (currentPage - 1) * itemsPerPage + index + 1;
 
-      const actions = `
-            <a href="detailGuru.php?id=${item.id}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm mr-1">
-                Lihat
-            </a>
-            <button class="px-3 py-1 rounded text-sm mr-1 edit-btn" data-id="${item.id}">
-                Edit
-            </button>
-            <button class="text-red-500 px-3 py-1 rounded text-sm delete-btn" data-id="${item.id}">
-                Hapus
-            </button>`;
-
-      tbody.append(`
-            <tr class="hover:bg-gray-50">
-                <td class="px-4 py-3">${rowNumber}</td>
-                <td class="px-4 py-3">${item.nip || "-"}</td>
-                <td class="px-4 py-3">${item.nama_lengkap}</td>
-                <td class="px-4 py-3">${item.kontak || "-"}</td>
-                <td class="px-4 py-3">${item.status}</td>
-                <td class="px-4 py-3">
-                    <span class="px-2 py-1 rounded text-sm ${
-                      item.status_aktif === "aktif"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }">
-                        ${item.status_aktif === "aktif" ? "Aktif" : "Non-aktif"}
-                    </span>
-                </td>
-                <td class="px-4 py-3 text-center">${actions}</td>
-            </tr>
-        `);
+      const row = `
+              <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">${rowNumber}</td>
+                  <td class="px-4 py-3">${item.nip || "-"}</td>
+                  <td class="px-4 py-3">${item.nama_lengkap}</td>
+                  <td class="px-4 py-3">${item.kontak || "-"}</td>
+                  <td class="px-4 py-3">${item.status}</td>
+                  <td class="px-4 py-3">
+                      <span class="px-2 py-1 rounded text-sm ${
+                        item.status_aktif === "aktif"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }">
+                          ${
+                            item.status_aktif === "aktif"
+                              ? "Aktif"
+                              : "Non-aktif"
+                          }
+                      </span>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                      <a href="detailGuru.php?id=${item.id}" 
+                         class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm mr-1">
+                          Detail
+                      </a>
+                      ${
+                        $("#userRole").val() === "admin"
+                          ? `
+                          <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm mr-1" 
+                                  data-id="${item.id}">
+                              Edit
+                          </button>
+                          <button class="delete-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" 
+                                  data-id="${item.id}">
+                              Hapus
+                          </button>
+                      `
+                          : ""
+                      }
+                  </td>
+              </tr>
+          `;
+      tbody.append(row);
     });
   }
 
-  // Update Pagination Function
-  function updatePagination(total, limit) {
-    const totalPages = Math.ceil(total / limit);
+  // Render pagination
+  function renderPagination(total) {
+    const totalPages = Math.ceil(total / itemsPerPage);
     const pagination = $(".pagination");
     pagination.empty();
 
     // Previous button
     pagination.append(`
-        <button class="pagination-btn ${
-          currentPage === 1
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white hover:bg-gray-100"
-        } 
-                      px-3 py-1 rounded border" 
-                data-page="${currentPage - 1}" 
-                ${currentPage === 1 ? "disabled" : ""}>
-          <i class="fas fa-chevron-left"></i>
-        </button>
+          <button class="pagination-btn ${
+            currentPage === 1
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-white hover:bg-gray-100"
+          } 
+                  px-3 py-1 rounded border" 
+                  data-page="${currentPage - 1}" 
+                  ${currentPage === 1 ? "disabled" : ""}>
+              <i class="fas fa-chevron-left"></i>
+          </button>
       `);
 
-    // Page buttons
+    // Page numbers
     for (let i = 1; i <= totalPages; i++) {
       if (
         i === 1 ||
@@ -161,16 +148,16 @@ $(document).ready(function () {
         (i >= currentPage - 2 && i <= currentPage + 2)
       ) {
         pagination.append(`
-            <button class="pagination-btn ${
-              i === currentPage
-                ? "bg-sky-500 text-white"
-                : "bg-white hover:bg-gray-100"
-            } 
+                  <button class="pagination-btn ${
+                    i === currentPage
+                      ? "bg-sky-500 text-white"
+                      : "bg-white hover:bg-gray-100"
+                  } 
                           px-3 py-1 rounded border"
-                    data-page="${i}">
-              ${i}
-            </button>
-          `);
+                          data-page="${i}">
+                      ${i}
+                  </button>
+              `);
       } else if (i === currentPage - 3 || i === currentPage + 3) {
         pagination.append(`<span class="px-2">...</span>`);
       }
@@ -178,62 +165,20 @@ $(document).ready(function () {
 
     // Next button
     pagination.append(`
-        <button class="pagination-btn ${
-          currentPage === totalPages
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white hover:bg-gray-100"
-        } 
-                      px-3 py-1 rounded border" 
-                data-page="${currentPage + 1}" 
-                ${currentPage === totalPages ? "disabled" : ""}>
-          <i class="fas fa-chevron-right"></i>
-        </button>
+          <button class="pagination-btn ${
+            currentPage === totalPages
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-white hover:bg-gray-100"
+          } 
+                  px-3 py-1 rounded border" 
+                  data-page="${currentPage + 1}" 
+                  ${currentPage === totalPages ? "disabled" : ""}>
+              <i class="fas fa-chevron-right"></i>
+          </button>
       `);
-
-    $("#totalData").text(total);
   }
 
-  // Delete Handler
-  $(document).on("click", ".delete-btn", function () {
-    const id = $(this).data("id");
-
-    if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
-      $.ajax({
-        url: "../functions/guru/",
-        type: "POST",
-        data: {
-          action: "deleteGuru",
-          id: id,
-        },
-        success: function (response) {
-          try {
-            if (typeof response === "string") {
-              response = JSON.parse(response);
-            }
-            if (response.status === "success") {
-              showToast("success", response.message);
-              loadData();
-            } else {
-              showToast("error", response.message);
-            }
-          } catch (e) {
-            showToast("error", "Format response tidak valid");
-          }
-        },
-        error: function (xhr, status, error) {
-          showToast("error", "Gagal menghapus data: " + error);
-        },
-      });
-    }
-  });
-
-  // Edit Handler
-  $(document).on("click", ".edit-btn", function () {
-    const id = $(this).data("id");
-    window.location.href = `editGuru.php?id=${id}`;
-  });
-
-  // Utility Functions
+  // Utility functions
   function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -256,6 +201,36 @@ $(document).ready(function () {
     });
   }
 
+  // Delete handler
+  $(document).on("click", ".delete-btn", function () {
+    const id = $(this).data("id");
+
+    if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+      $.ajax({
+        url: "../functions/guru/",
+        type: "POST",
+        data: {
+          action: "deleteGuru",
+          id: id,
+        },
+        success: function (response) {
+          if (response.status === "success") {
+            showToast("success", response.message);
+            loadData();
+          } else {
+            showToast("error", response.message);
+          }
+        },
+      });
+    }
+  });
+
+  // Edit handler
+  $(document).on("click", ".edit-btn", function () {
+    const id = $(this).data("id");
+    window.location.href = `editGuru.php?id=${id}`;
+  });
+
   // Initialize
-  initializeTable();
+  loadData();
 });
