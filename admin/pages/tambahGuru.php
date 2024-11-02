@@ -104,6 +104,30 @@ $daftarMapel = getAllMapel($pdo);
                     </div>
                 </div>
 
+                <!-- Jurusan -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Jurusan yang Diampu</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <?php
+                        $query = "SELECT id, nama_jurusan FROM jurusan ORDER BY nama_jurusan";
+                        $stmt = $pdo->prepare($query);
+                        $stmt->execute();
+                        $daftarJurusan = $stmt->fetchAll();
+
+                        foreach ($daftarJurusan as $jurusan):
+                        ?>
+                            <div class="flex items-center">
+                                <input type="checkbox" name="jurusan[]"
+                                    value="<?php echo htmlspecialchars($jurusan['id']); ?>"
+                                    class="rounded border-gray-300 text-sky-500 focus:ring-sky-500">
+                                <label class="ml-2 text-sm text-gray-700">
+                                    <?php echo htmlspecialchars($jurusan['nama_jurusan']); ?>
+                                </label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
                 <!-- Alamat -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Alamat</label>

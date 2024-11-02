@@ -188,6 +188,75 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
                             <p class="text-gray-500 italic print:text-sm">Tidak ada data mata pelajaran</p>
                         <?php endif; ?>
                     </div>
+
+                    <!-- Jurusan -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-4 print:text-sm print:mb-2 print:font-bold">
+                            <?= $guru['status_aktif'] === 'aktif' ? 'Jurusan yang Diampu' : 'Riwayat Jurusan' ?>
+                        </h3>
+                        <!-- Di bagian menampilkan jurusan -->
+                        <!-- Di bagian menampilkan jurusan pada detailGuru.php -->
+                        <?php if (!empty($guru['jurusan'])): ?>
+                            <div class="flex flex-col gap-4">
+                                <!-- Jurusan Aktif -->
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">Jurusan Saat Ini:</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <?php
+                                        $activeJurusan = array_filter($guru['jurusan'], function ($j) {
+                                            return $j['is_active'];
+                                        });
+
+                                        if (!empty($activeJurusan)):
+                                            foreach ($activeJurusan as $jurusan):
+                                        ?>
+                                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded text-sm">
+                                                    <?= htmlspecialchars($jurusan['nama']) ?>
+                                                </span>
+                                            <?php
+                                            endforeach;
+                                        else:
+                                            ?>
+                                            <span class="text-gray-500 italic text-sm">Tidak ada jurusan aktif</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <!-- Riwayat Jurusan -->
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">Riwayat Jurusan:</h4>
+                                    <div class="space-y-1">
+                                        <?php
+                                        $inactiveJurusan = array_filter($guru['jurusan'], function ($j) {
+                                            return !$j['is_active'];
+                                        });
+
+                                        if (!empty($inactiveJurusan)):
+                                            foreach ($inactiveJurusan as $jurusan):
+                                        ?>
+                                                <div class="text-sm text-gray-600">
+                                                    <span class="px-2 py-0.5 bg-gray-100 rounded">
+                                                        <?= htmlspecialchars($jurusan['nama']) ?>
+                                                    </span>
+                                                    <span class="text-xs ml-2">
+                                                        (<?= date('d/m/Y', strtotime($jurusan['tanggal_mulai'])) ?> -
+                                                        <?= date('d/m/Y', strtotime($jurusan['tanggal_selesai'])) ?>)
+                                                    </span>
+                                                </div>
+                                            <?php
+                                            endforeach;
+                                        else:
+                                            ?>
+                                            <span class="text-gray-500 italic text-sm">Tidak ada riwayat jurusan sebelumnya</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-gray-500 italic">Belum ada jurusan yang diampu</p>
+                        <?php endif; ?>
+                    </div>
+
                 </div>
             </div>
         <?php endif; ?>

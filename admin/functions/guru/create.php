@@ -87,6 +87,14 @@ function createGuru($pdo, $data, $foto = null)
             }
         }
 
+        // Handle jurusan yang diampu
+        if (!empty($data['jurusan'])) {
+            $stmtJurusan = $pdo->prepare("CALL insert_guru_jurusan(?, ?)");
+            foreach ($data['jurusan'] as $id_jurusan) {
+                $stmtJurusan->execute([$id, $id_jurusan]);
+            }
+        }
+
         $pdo->commit();
         return ['status' => 'success', 'message' => 'Data guru berhasil ditambahkan'];
     } catch (Exception $e) {

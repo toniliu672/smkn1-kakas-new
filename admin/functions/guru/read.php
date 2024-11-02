@@ -125,13 +125,20 @@ function getGuruCount($pdo, $search = [])
 function getDetailGuru($pdo, $id)
 {
     try {
-        // Ambil data guru beserta mata pelajaran yang diajar
+        // Ambil data guru beserta mata pelajaran dan jurusan yang diampu
         $query = "SELECT g.*, 
                  GROUP_CONCAT(DISTINCT mp.id) as mapel_ids,
-                 GROUP_CONCAT(DISTINCT mp.nama_mata_pelajaran) as mapel_names
+                 GROUP_CONCAT(DISTINCT mp.nama_mata_pelajaran) as mapel_names,
+                 GROUP_CONCAT(DISTINCT j.id) as jurusan_ids,
+                 GROUP_CONCAT(DISTINCT j.nama_jurusan) as jurusan_names,
+                 GROUP_CONCAT(DISTINCT gj.tanggal_mulai ORDER BY gj.tanggal_mulai DESC) as tanggal_mulai,
+                 GROUP_CONCAT(DISTINCT gj.tanggal_selesai ORDER BY gj.tanggal_mulai DESC) as tanggal_selesai,
+                 GROUP_CONCAT(DISTINCT gj.is_active ORDER BY gj.tanggal_mulai DESC) as is_active
                  FROM guru g
                  LEFT JOIN guru_mata_pelajaran gmp ON g.id = gmp.id_guru
                  LEFT JOIN mata_pelajaran mp ON gmp.id_mata_pelajaran = mp.id
+                 LEFT JOIN guru_jurusan gj ON g.id = gj.id_guru
+                 LEFT JOIN jurusan j ON gj.id_jurusan = j.id
                  WHERE g.id = ?
                  GROUP BY g.id";
 
@@ -140,7 +147,7 @@ function getDetailGuru($pdo, $id)
         $guru = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($guru) {
-            // Format data mata pelajaran
+            // Format data mata pelajaran (kode yang sudah ada)
             $guru['mata_pelajaran'] = [];
             if ($guru['mapel_ids']) {
                 $mapelIds = explode(',', $guru['mapel_ids']);
@@ -153,8 +160,38 @@ function getDetailGuru($pdo, $id)
                 }
             }
 
+            // Format data jurusan dengan penanganan error yang lebih baik
+            $guru['jurusan'] = [];
+            if (!empty($guru['jurusan_ids'])) {
+                $jurusanIds = explode(',', $guru['jurusan_ids']);
+                $jurusanNames = explode(',', $guru['jurusan_names']);
+                $tanggalMulai = explode(',', $guru['tanggal_mulai']);
+                $tanggalSelesai = explode(',', $guru['tanggal_selesai']);
+                $isActive = explode(',', $guru['is_active']);
+
+                foreach ($jurusanIds as $i => $id) {
+                    if (isset($jurusanNames[$i])) {
+                        $guru['jurusan'][] = [
+                            'id' => $id,
+                            'nama' => $jurusanNames[$i],
+                            'tanggal_mulai' => $tanggalMulai[$i] ?? null,
+                            'tanggal_selesai' => (!empty($tanggalSelesai[$i]) && $tanggalSelesai[$i] !== 'NULL') ? $tanggalSelesai[$i] : null,
+                            'is_active' => ($isActive[$i] ?? '0') == '1'
+                        ];
+                    }
+                }
+            }
+
             // Hapus field yang tidak perlu
-            unset($guru['mapel_ids'], $guru['mapel_names']);
+            unset(
+                $guru['mapel_ids'],
+                $guru['mapel_names'],
+                $guru['jurusan_ids'],
+                $guru['jurusan_names'],
+                $guru['tanggal_mulai'],
+                $guru['tanggal_selesai'],
+                $guru['is_active']
+            );
         }
 
         return $guru ?: ['status' => 'error', 'message' => 'Data guru tidak ditemukan'];
@@ -183,13 +220,17 @@ function getAllGuruForPrint($pdo, $search = [])
 
         $whereClause = "WHERE " . implode(" AND ", $where);
 
-        // Query untuk mendapatkan data guru dan mata pelajaran yang diajar
+        // Query dimodifikasi untuk hanya mengambil jurusan yang aktif
         $query = "SELECT g.*, 
                  GROUP_CONCAT(DISTINCT mp.id) as mapel_ids,
-                 GROUP_CONCAT(DISTINCT mp.nama_mata_pelajaran) as mapel_names
+                 GROUP_CONCAT(DISTINCT mp.nama_mata_pelajaran) as mapel_names,
+                 GROUP_CONCAT(DISTINCT CASE WHEN gj.is_active = TRUE THEN j.id END) as jurusan_ids,
+                 GROUP_CONCAT(DISTINCT CASE WHEN gj.is_active = TRUE THEN j.nama_jurusan END) as jurusan_names
                  FROM guru g
                  LEFT JOIN guru_mata_pelajaran gmp ON g.id = gmp.id_guru
                  LEFT JOIN mata_pelajaran mp ON gmp.id_mata_pelajaran = mp.id
+                 LEFT JOIN guru_jurusan gj ON g.id = gj.id_guru
+                 LEFT JOIN jurusan j ON gj.id_jurusan = j.id
                  $whereClause
                  GROUP BY g.id
                  ORDER BY g.nama_lengkap ASC";
@@ -198,21 +239,45 @@ function getAllGuruForPrint($pdo, $search = [])
         $stmt->execute($params);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Format data mata pelajaran
+        // Format data
         foreach ($result as &$guru) {
+            // Format mata pelajaran
             $guru['mata_pelajaran'] = [];
             if (!empty($guru['mapel_ids']) && !empty($guru['mapel_names'])) {
                 $mapelIds = explode(',', $guru['mapel_ids']);
                 $mapelNames = explode(',', $guru['mapel_names']);
                 for ($i = 0; $i < count($mapelIds); $i++) {
-                    $guru['mata_pelajaran'][] = [
-                        'id' => $mapelIds[$i],
-                        'nama' => $mapelNames[$i]
-                    ];
+                    if (!empty($mapelIds[$i]) && !empty($mapelNames[$i])) {  // Tambahan pengecekan
+                        $guru['mata_pelajaran'][] = [
+                            'id' => $mapelIds[$i],
+                            'nama' => $mapelNames[$i]
+                        ];
+                    }
                 }
             }
+
+            // Format jurusan (hanya yang aktif)
+            $guru['jurusan'] = [];
+            if (!empty($guru['jurusan_ids']) && !empty($guru['jurusan_names'])) {
+                $jurusanIds = explode(',', $guru['jurusan_ids']);
+                $jurusanNames = explode(',', $guru['jurusan_names']);
+                for ($i = 0; $i < count($jurusanIds); $i++) {
+                    if (!empty($jurusanIds[$i]) && !empty($jurusanNames[$i])) {  // Tambahan pengecekan
+                        $guru['jurusan'][] = [
+                            'id' => $jurusanIds[$i],
+                            'nama' => $jurusanNames[$i]
+                        ];
+                    }
+                }
+            }
+
             // Hapus field yang tidak diperlukan
-            unset($guru['mapel_ids'], $guru['mapel_names']);
+            unset(
+                $guru['mapel_ids'],
+                $guru['mapel_names'],
+                $guru['jurusan_ids'],
+                $guru['jurusan_names']
+            );
         }
 
         return [

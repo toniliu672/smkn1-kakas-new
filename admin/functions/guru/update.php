@@ -97,6 +97,54 @@ function updateGuru($pdo, $id, $data, $foto = null)
                 }
             }
         }
+        // Update jurusan
+        if (isset($data['jurusan'])) {
+            // Dapatkan jurusan yang aktif saat ini
+            $stmt = $pdo->prepare("
+            SELECT id_jurusan 
+            FROM guru_jurusan 
+            WHERE id_guru = ? AND is_active = TRUE
+        ");
+            $stmt->execute([$id]);
+            $currentJurusan = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            // Jurusan yang akan dihapus (ada di current tapi tidak ada di data baru)
+            $jurusanToDeactivate = array_diff($currentJurusan, $data['jurusan']);
+
+            // Non-aktifkan jurusan yang tidak dipilih lagi
+            if (!empty($jurusanToDeactivate)) {
+                $stmt = $pdo->prepare("
+                UPDATE guru_jurusan 
+                SET is_active = FALSE, 
+                    tanggal_selesai = CURRENT_DATE 
+                WHERE id_guru = ? 
+                AND id_jurusan IN (" . str_repeat('?,', count($jurusanToDeactivate) - 1) . "?)
+                AND is_active = TRUE
+            ");
+                $stmt->execute(array_merge([$id], $jurusanToDeactivate));
+            }
+
+            // Tambahkan jurusan baru (yang ada di data baru tapi tidak ada di current)
+            $jurusanToAdd = array_diff($data['jurusan'], $currentJurusan);
+
+            if (!empty($jurusanToAdd)) {
+                $stmt = $pdo->prepare("
+                INSERT INTO guru_jurusan (id_guru, id_jurusan, tanggal_mulai, is_active) 
+                VALUES (?, ?, CURRENT_DATE, TRUE)
+            ");
+                foreach ($jurusanToAdd as $id_jurusan) {
+                    try {
+                        $stmt->execute([$id, $id_jurusan]);
+                    } catch (PDOException $e) {
+                        // Handle jika jurusan sudah ada dan aktif
+                        if ($e->getCode() == 23000) { // Duplicate entry error
+                            continue;
+                        }
+                        throw $e;
+                    }
+                }
+            }
+        }
 
         $pdo->commit();
         return ['status' => 'success', 'message' => 'Data guru berhasil diperbarui'];

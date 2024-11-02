@@ -81,6 +81,7 @@ $(document).ready(function () {
                   <td class="px-4 py-3">${item.nama_lengkap}</td>
                   <td class="px-4 py-3">${item.kontak || "-"}</td>
                   <td class="px-4 py-3">${item.status}</td>
+
                   <td class="px-4 py-3">
                       <span class="px-2 py-1 rounded text-sm ${
                         item.status_aktif === "aktif"
@@ -93,6 +94,20 @@ $(document).ready(function () {
                               : "Non-aktif"
                           }
                       </span>
+                  </td>
+                  <td class="px-4 py-3">
+                      ${
+                        item.jurusan
+                          ? item.jurusan
+                              .map(
+                                (j) =>
+                                  `<span class="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm mr-1 mb-1">
+                              ${j.nama}
+                          </span>`
+                              )
+                              .join("")
+                          : "-"
+                      }
                   </td>
                   <td class="px-4 py-3 text-center">
                       <a href="detailGuru.php?id=${item.id}" 

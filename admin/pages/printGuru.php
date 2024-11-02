@@ -123,8 +123,9 @@ $current_date = date('d F Y');
                 <th class="border border-gray-300 px-4 py-2">Status Aktif</th>
                 <th class="border border-gray-300 px-4 py-2">Tanggal Bergabung</th>
                 <th class="border border-gray-300 px-4 py-2">Tanggal Keluar</th>
-                <th class="border border-gray-300 px-4 py-2">Alasan Keluar</th>
+                <!-- <th class="border border-gray-300 px-4 py-2">Alasan Keluar</th> -->
                 <th class="border border-gray-300 px-4 py-2">Mata Pelajaran</th>
+                <th class="border border-gray-300 px-4 py-2">Jurusan</th>
             </tr>
         </thead>
         <tbody>
@@ -140,13 +141,14 @@ $current_date = date('d F Y');
                         <td class="border border-gray-300 px-4 py-2"><?php echo htmlspecialchars($guru['nama_lengkap']); ?></td>
                         <td class="border border-gray-300 px-4 py-2"><?php echo htmlspecialchars($guru['status']); ?></td>
                         <td class="border border-gray-300 px-4 py-2"><?php echo ucfirst(htmlspecialchars($guru['status_aktif'])); ?></td>
+
                         <td class="border border-gray-300 px-4 py-2">
                             <?php echo date('d/m/Y', strtotime($guru['tanggal_bergabung'])); ?>
                         </td>
                         <td class="border border-gray-300 px-4 py-2">
                             <?php echo $guru['tanggal_keluar'] ? date('d/m/Y', strtotime($guru['tanggal_keluar'])) : '-'; ?>
                         </td>
-                        <td class="border border-gray-300 px-4 py-2">
+                        <!-- <td class="border border-gray-300 px-4 py-2">
                             <?php
                             if ($guru['alasan_keluar']) {
                                 echo ucfirst(str_replace('_', ' ', htmlspecialchars($guru['alasan_keluar'])));
@@ -157,13 +159,25 @@ $current_date = date('d F Y');
                                 echo '-';
                             }
                             ?>
-                        </td>
+                        </td> -->
                         <td class="border border-gray-300 px-4 py-2">
                             <?php
                             if (!empty($guru['mata_pelajaran'])) {
                                 echo implode(', ', array_map(function ($mapel) {
                                     return htmlspecialchars($mapel['nama']);
                                 }, $guru['mata_pelajaran']));
+                            } else {
+                                echo '-';
+                            }
+                            ?>
+                        </td>
+                        <!-- Jurusan -->
+                        <td class="border border-gray-300 px-4 py-2">
+                            <?php
+                            if (!empty($guru['jurusan'])) {
+                                echo implode(', ', array_map(function ($j) {
+                                    return htmlspecialchars($j['nama']);
+                                }, $guru['jurusan']));
                             } else {
                                 echo '-';
                             }
