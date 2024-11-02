@@ -1,0 +1,11 @@
+{
+    "name": "smkn-kakas/school-management",
+    "description": "School Management System for SMK NEGERI 1 KAKAS",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "require": {}
+}
