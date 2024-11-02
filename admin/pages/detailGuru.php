@@ -3,6 +3,7 @@
 require_once '../../auth/auth_check.php';
 require_once '../../config/koneksi.php';
 require_once '../functions/guru/read.php';
+require_once '../functions/helpers/dateIndonesia.php';
 check_login();
 
 $id = isset($_GET['id']) ? $_GET['id'] : null;
@@ -125,7 +126,7 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
                             <tr>
                                 <td class="py-2 text-gray-600 print:py-1">Tanggal Bergabung</td>
                                 <td class="py-2 text-gray-600 print:py-1">:</td>
-                                <td class="py-2 text-gray-900 print:py-1"><?= date('d F Y', strtotime($guru['tanggal_bergabung'])) ?></td>
+                                <td class="py-2 text-gray-900 print:py-1"><?= formatTanggalIndonesia($guru['tanggal_bergabung']) ?></td>
                             </tr>
                             <tr>
                                 <td class="py-2 text-gray-600 print:py-1">Lama Bekerja</td>
@@ -163,11 +164,11 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
                 </div>
 
                 <!-- Waktu Update -->
-                <div class="mt-6 pt-4 border-t border-gray-200 print:mt-4 print:pt-2">
+                <!-- <div class="mt-6 pt-4 border-t border-gray-200 print:mt-4 print:pt-2">
                     <p class="text-sm text-gray-500 print:text-xs">
                         Terakhir diperbarui: <?= date('d F Y H:i', strtotime($guru['updated_at'])) ?>
                     </p>
-                </div>
+                </div> -->
             </div>
         <?php endif; ?>
     </div>

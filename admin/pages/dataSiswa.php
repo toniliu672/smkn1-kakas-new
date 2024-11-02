@@ -23,6 +23,12 @@ $daftarAngkatan = getAllAngkatan($pdo);
     <?php include '../components/navbar.php'; ?>
 
     <div class="container mx-auto px-4 py-10">
+        <div class="py-2">
+            <button
+                class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                <i class="fas fa-arrow-left mr-2"></i><a href="./dashboard.php">Kembali</a>
+            </button>
+        </div>
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <!-- Judul dan Navigasi Utama -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">

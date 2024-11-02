@@ -84,53 +84,54 @@ $(document).ready(function () {
 
   // Update Table Function
   function updateTable(data) {
-    const tbody = $('#dataTable tbody');
+    const tbody = $("#dataTable tbody");
     tbody.empty();
-    
+
     if (!Array.isArray(data) || data.length === 0) {
-        tbody.append(`
+      tbody.append(`
             <tr>
                 <td colspan="7" class="px-4 py-3 text-center text-gray-500">Tidak ada data</td>
             </tr>
         `);
-        return;
+      return;
     }
-    
+
     data.forEach((item, index) => {
-        const rowNumber = (currentPage - 1) * parseInt($('#itemsPerPage').val()) + index + 1;
-        
-        const actions = `
-            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm mr-1 view-btn" data-id="${item.id}">
+      const rowNumber =
+        (currentPage - 1) * parseInt($("#itemsPerPage").val()) + index + 1;
+
+      const actions = `
+            <a href="detailGuru.php?id=${item.id}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm mr-1">
                 Lihat
-            </button>
-            <button class=" px-3 py-1 rounded text-sm mr-1 edit-btn" data-id="${item.id}">
+            </a>
+            <button class="px-3 py-1 rounded text-sm mr-1 edit-btn" data-id="${item.id}">
                 Edit
             </button>
-            <button class="text-red-500  px-3 py-1 rounded text-sm delete-btn" data-id="${item.id}">
+            <button class="text-red-500 px-3 py-1 rounded text-sm delete-btn" data-id="${item.id}">
                 Hapus
             </button>`;
 
-        tbody.append(`
+      tbody.append(`
             <tr class="hover:bg-gray-50">
                 <td class="px-4 py-3">${rowNumber}</td>
-                <td class="px-4 py-3">${item.nip || '-'}</td>
+                <td class="px-4 py-3">${item.nip || "-"}</td>
                 <td class="px-4 py-3">${item.nama_lengkap}</td>
-                <td class="px-4 py-3">${item.kontak || '-'}</td>
+                <td class="px-4 py-3">${item.kontak || "-"}</td>
                 <td class="px-4 py-3">${item.status}</td>
                 <td class="px-4 py-3">
                     <span class="px-2 py-1 rounded text-sm ${
-                        item.status_aktif === 'aktif' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
+                      item.status_aktif === "aktif"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
                     }">
-                        ${item.status_aktif === 'aktif' ? 'Aktif' : 'Non-aktif'}
+                        ${item.status_aktif === "aktif" ? "Aktif" : "Non-aktif"}
                     </span>
                 </td>
                 <td class="px-4 py-3 text-center">${actions}</td>
             </tr>
         `);
     });
-}
+  }
 
   // Update Pagination Function
   function updatePagination(total, limit) {
@@ -226,98 +227,10 @@ $(document).ready(function () {
     }
   });
 
-  // View Handler
-  $(document).on('click', '.view-btn', function() {
-    const id = $(this).data('id');
-    
-    $.ajax({
-        url: '../functions/guru/',
-        type: 'POST',
-        data: {
-            action: 'getDetailGuru',
-            id: id
-        },
-        success: function(response) {
-            try {
-                const data = typeof response === 'string' ? JSON.parse(response) : response;
-                if (data.status === 'error') {
-                    showToast('error', data.message);
-                    return;
-                }
-                
-                const content = `
-                    <div class="p-4">
-                        ${data.foto ? `
-                            <div class="mb-4">
-                                <p class="font-semibold">Foto:</p>
-                                <img src="../../${data.foto}" alt="Foto Guru" class="w-32 h-32 object-cover rounded">
-                            </div>
-                        ` : ''}
-                        <div class="grid grid-cols-1 gap-4">
-                            <div>
-                                <p class="font-semibold">NIP:</p>
-                                <p>${data.nip || '-'}</p>
-                            </div>
-                            <div>
-                                <p class="font-semibold">Nama Lengkap:</p>
-                                <p>${data.nama_lengkap}</p>
-                            </div>
-                            <div>
-                                <p class="font-semibold">Email:</p>
-                                <p>${data.email || '-'}</p>
-                            </div>
-                            <div>
-                                <p class="font-semibold">Kontak:</p>
-                                <p>${data.kontak || '-'}</p>
-                            </div>
-                            <div>
-                                <p class="font-semibold">Status:</p>
-                                <p>${data.status}</p>
-                            </div>
-                            <div>
-                                <p class="font-semibold">Status Aktif:</p>
-                                <p>${data.status_aktif}</p>
-                            </div>
-                            <div>
-                                <p class="font-semibold">Tanggal Bergabung:</p>
-                                <p>${new Date(data.tanggal_bergabung).toLocaleDateString('id-ID')}</p>
-                            </div>
-                            <div>
-                                <p class="font-semibold">Alamat:</p>
-                                <p>${data.alamat || '-'}</p>
-                            </div>
-                            <div>
-                                <p class="font-semibold">Mata Pelajaran:</p>
-                                <p>${Array.isArray(data.mata_pelajaran) ? 
-                                    data.mata_pelajaran.map(m => m.nama).join(', ') || '-' : 
-                                    '-'}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                $('#modalTitle').text('Detail Guru');
-                $('#modalContent').html(content);
-                $('#modalContainer').removeClass('hidden');
-            } catch (e) {
-                showToast('error', 'Gagal memproses data: ' + e.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            showToast('error', 'Gagal memuat detail: ' + error);
-        }
-    });
-});
-
   // Edit Handler
   $(document).on("click", ".edit-btn", function () {
     const id = $(this).data("id");
     window.location.href = `editGuru.php?id=${id}`;
-  });
-
-  // Modal Close Handler
-  $(document).on("click", ".modal-close", function () {
-    $("#modalContainer").addClass("hidden");
   });
 
   // Utility Functions
