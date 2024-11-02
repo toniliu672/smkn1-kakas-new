@@ -1,7 +1,10 @@
+<!-- admin/pages/dashboard.php -->
 <?php
 // admin/pages/dashboard.php
 require_once '../../auth/auth_check.php';
 check_login();
+require_once '../../config/koneksi.php';
+require_once '../components/charts.php';
 
 $page_title = "Dashboard - SMKN 1 Kakas";
 ?>
@@ -87,6 +90,23 @@ $page_title = "Dashboard - SMKN 1 Kakas";
                 <h3 class="text-lg font-semibold text-gray-800 mb-2">Surat Keluar</h3>
                 <p class="text-gray-600">Kelola arsip surat keluar</p>
             </a>
+        </div>
+
+        <!-- Chart Statistics Section -->
+        <div class="mt-12 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Statistik Sekolah</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart Siswa -->
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <?php echo createChartComponent($pdo, 'siswaChart', 'Statistik Siswa', 'siswa'); ?>
+                </div>
+                
+                <!-- Chart Guru -->
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <?php echo createChartComponent($pdo, 'guruChart', 'Statistik Guru', 'guru'); ?>
+                </div>
+            </div>
         </div>
     </div>
 </body>
