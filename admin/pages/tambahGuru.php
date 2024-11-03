@@ -104,7 +104,7 @@ $daftarMapel = getAllMapel($pdo);
                     </div>
                 </div>
 
-                <!-- Jurusan -->
+                <!-- Jurusan - dengan penambahan alasan penempatan -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Jurusan yang Diampu</label>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -116,16 +116,26 @@ $daftarMapel = getAllMapel($pdo);
 
                         foreach ($daftarJurusan as $jurusan):
                         ?>
-                            <div class="flex items-center">
+                            <div class="flex items-center bg-gray-50 p-3 rounded">
                                 <input type="checkbox" name="jurusan[]"
                                     value="<?php echo htmlspecialchars($jurusan['id']); ?>"
-                                    class="rounded border-gray-300 text-sky-500 focus:ring-sky-500">
+                                    class="jurusan-checkbox rounded border-gray-300 text-sky-500 focus:ring-sky-500">
                                 <label class="ml-2 text-sm text-gray-700">
                                     <?php echo htmlspecialchars($jurusan['nama_jurusan']); ?>
                                 </label>
                             </div>
                         <?php endforeach; ?>
                     </div>
+                </div>
+
+                <!-- Alasan Penempatan - field baru -->
+                <div id="alasanPenempatan" class="mb-6 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Alasan Penempatan di Jurusan
+                    </label>
+                    <textarea name="alasan_penempatan" rows="3"
+                        class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="Berikan alasan penempatan guru di jurusan yang dipilih..."></textarea>
                 </div>
 
                 <!-- Alamat -->
@@ -153,12 +163,29 @@ $daftarMapel = getAllMapel($pdo);
         </div>
     </div>
 
-    <!-- JavaScript tidak berubah -->
     <script>
         $(document).ready(function() {
+            // Toggle alasan penempatan saat jurusan dipilih
+            $('.jurusan-checkbox').change(function() {
+                const anyChecked = $('.jurusan-checkbox:checked').length > 0;
+                $('#alasanPenempatan').toggle(anyChecked);
+                $('textarea[name="alasan_penempatan"]').prop('required', anyChecked);
+            });
+
             $('#formTambahGuru').on('submit', function(e) {
                 e.preventDefault();
                 const formData = new FormData(this);
+
+                // Validasi alasan penempatan
+                if ($('.jurusan-checkbox:checked').length > 0 && !formData.get('alasan_penempatan').trim()) {
+                    $.toast({
+                        heading: 'Error',
+                        text: 'Mohon isi alasan penempatan jurusan',
+                        icon: 'error',
+                        position: 'top-right'
+                    });
+                    return;
+                }
 
                 $.ajax({
                     url: '../functions/guru/',

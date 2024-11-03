@@ -1,12 +1,13 @@
 <?php
+// admin/functions/guru/create.php
 function createGuru($pdo, $data, $foto = null)
 {
     try {
         // Generate ID yang lebih pendek
         $prefix = "GR";
         $year = date('y');
-        $random = str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT); // 3 digit random
-        $id = $prefix . $year . $random; // Format: GR23001, GR23002, dst
+        $random = str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
+        $id = $prefix . $year . $random;
 
         // Cek duplikasi ID
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM guru WHERE id = ?");
@@ -26,6 +27,7 @@ function createGuru($pdo, $data, $foto = null)
             }
         }
 
+        // Handle foto
         $fotoPath = null;
         if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
             $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -39,7 +41,6 @@ function createGuru($pdo, $data, $foto = null)
                 throw new Exception("Ukuran file terlalu besar. Maksimal 10MB.");
             }
 
-            // Buat direktori jika belum ada
             $uploadDir = "../../../uploads/guru/";
             if (!file_exists($uploadDir)) {
                 mkdir($uploadDir, 0777, true);
@@ -87,11 +88,16 @@ function createGuru($pdo, $data, $foto = null)
             }
         }
 
-        // Handle jurusan yang diampu
+        // Handle jurusan dengan sistem tracking baru
         if (!empty($data['jurusan'])) {
-            $stmtJurusan = $pdo->prepare("CALL insert_guru_jurusan(?, ?)");
+            $stmtJurusan = $pdo->prepare("CALL insert_guru_jurusan(?, ?, ?, ?)");
             foreach ($data['jurusan'] as $id_jurusan) {
-                $stmtJurusan->execute([$id, $id_jurusan]);
+                $stmtJurusan->execute([
+                    $id,
+                    $id_jurusan,
+                    'INITIAL',
+                    'Penempatan awal guru'
+                ]);
             }
         }
 
@@ -99,7 +105,6 @@ function createGuru($pdo, $data, $foto = null)
         return ['status' => 'success', 'message' => 'Data guru berhasil ditambahkan'];
     } catch (Exception $e) {
         $pdo->rollBack();
-        // Hapus foto jika upload gagal
         if (isset($fotoPath) && file_exists("../../../" . $fotoPath)) {
             unlink("../../../" . $fotoPath);
         }

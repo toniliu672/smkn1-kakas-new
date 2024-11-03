@@ -14,13 +14,12 @@ if (empty($id)) {
     exit;
 }
 
-$result = getDetailGuru($pdo, $id);
-if (!$result || isset($result['status']) && $result['status'] === 'error') {
+$guru = getGuruDetailWithTracking($pdo, $id);
+if (!$guru) {
     header('Location: dataGuru.php');
     exit;
 }
 
-$guru = $result;
 $daftarMapel = getAllMapel($pdo);
 ?>
 
@@ -52,7 +51,8 @@ $daftarMapel = getAllMapel($pdo);
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap *</label>
-                        <input type="text" name="nama_lengkap" required value="<?php echo htmlspecialchars($guru['nama_lengkap']); ?>"
+                        <input type="text" name="nama_lengkap" required
+                            value="<?php echo htmlspecialchars($guru['nama_lengkap']); ?>"
                             class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div>
@@ -71,19 +71,24 @@ $daftarMapel = getAllMapel($pdo);
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
-                        <select name="status" required class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <select name="status" required
+                            class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500">
                             <option value="PNS" <?php echo ($guru['status'] === 'PNS') ? 'selected' : ''; ?>>PNS</option>
-                            <option value="Honorer" <?php echo ($guru['status'] === 'Honorer') ? 'selected' : ''; ?>>Honorer</option>
-                            <option value="Kontrak" <?php echo ($guru['status'] === 'Kontrak') ? 'selected' : ''; ?>>Kontrak</option>
+                            <option value="Honorer" <?php echo ($guru['status'] === 'Honorer') ? 'selected' : ''; ?>>
+                                Honorer</option>
+                            <option value="Kontrak" <?php echo ($guru['status'] === 'Kontrak') ? 'selected' : ''; ?>>
+                                Kontrak</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Status Aktif *</label>
-                        <select name="status_aktif" required
-                            class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            id="statusAktif">
-                            <option value="aktif" <?php echo ($guru['status_aktif'] === 'aktif') ? 'selected' : ''; ?>>Aktif</option>
-                            <option value="non-aktif" <?php echo ($guru['status_aktif'] === 'non-aktif') ? 'selected' : ''; ?>>Non-Aktif</option>
+                        <select name="status_aktif" required id="statusAktif"
+                            class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            <option value="aktif" <?php echo ($guru['status_aktif'] === 'aktif') ? 'selected' : ''; ?>>
+                                Aktif</option>
+                            <option value="non-aktif"
+                                <?php echo ($guru['status_aktif'] === 'non-aktif') ? 'selected' : ''; ?>>
+                                Non-Aktif</option>
                         </select>
                     </div>
                     <div>
@@ -107,9 +112,13 @@ $daftarMapel = getAllMapel($pdo);
                             <?php echo ($guru['status_aktif'] === 'aktif') ? 'disabled' : ''; ?>
                             class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500">
                             <option value="">Pilih Alasan</option>
-                            <option value="pensiun" <?php echo ($guru['alasan_keluar'] === 'pensiun') ? 'selected' : ''; ?>>Pensiun</option>
-                            <option value="pindah_tugas" <?php echo ($guru['alasan_keluar'] === 'pindah_tugas') ? 'selected' : ''; ?>>Pindah Tugas</option>
-                            <option value="lainnya" <?php echo ($guru['alasan_keluar'] === 'lainnya') ? 'selected' : ''; ?>>Lainnya</option>
+                            <option value="pensiun" <?php echo ($guru['alasan_keluar'] === 'pensiun') ? 'selected' : ''; ?>>
+                                Pensiun</option>
+                            <option value="pindah_tugas"
+                                <?php echo ($guru['alasan_keluar'] === 'pindah_tugas') ? 'selected' : ''; ?>>
+                                Pindah Tugas</option>
+                            <option value="lainnya" <?php echo ($guru['alasan_keluar'] === 'lainnya') ? 'selected' : ''; ?>>
+                                Lainnya</option>
                         </select>
                     </div>
                 </div>
@@ -119,7 +128,8 @@ $daftarMapel = getAllMapel($pdo);
                     <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan Keluar</label>
                     <textarea name="keterangan_keluar" rows="3"
                         <?php echo ($guru['status_aktif'] === 'aktif') ? 'disabled' : ''; ?>
-                        class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500"><?php echo htmlspecialchars($guru['keterangan_keluar'] ?? ''); ?></textarea>
+                        class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500"><?php
+                                                                                                                    echo htmlspecialchars($guru['keterangan_keluar'] ?? ''); ?></textarea>
                 </div>
 
                 <!-- Mata Pelajaran -->
@@ -130,10 +140,12 @@ $daftarMapel = getAllMapel($pdo);
                         $guruMapel = array_map(function ($m) {
                             return $m['id'];
                         }, $guru['mata_pelajaran'] ?? []);
+
                         foreach ($daftarMapel as $mapel):
                         ?>
                             <div class="flex items-center">
-                                <input type="checkbox" name="mata_pelajaran[]" value="<?php echo htmlspecialchars($mapel['id']); ?>"
+                                <input type="checkbox" name="mata_pelajaran[]"
+                                    value="<?php echo htmlspecialchars($mapel['id']); ?>"
                                     <?php echo in_array($mapel['id'], $guruMapel) ? 'checked' : ''; ?>
                                     class="rounded border-gray-300 text-sky-500 focus:ring-sky-500">
                                 <label class="ml-2 text-sm text-gray-700">
@@ -146,35 +158,66 @@ $daftarMapel = getAllMapel($pdo);
 
                 <!-- Jurusan -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Jurusan yang Diampu</label>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <?php
-                        $query = "SELECT id, nama_jurusan FROM jurusan ORDER BY nama_jurusan";
-                        $stmt = $pdo->prepare($query);
-                        $stmt->execute();
-                        $daftarJurusan = $stmt->fetchAll();
-
-                        $guruJurusan = array_column($guru['jurusan'] ?? [], 'id');
-                        foreach ($daftarJurusan as $jurusan):
-                        ?>
-                            <div class="flex items-center">
-                                <input type="checkbox" name="jurusan[]"
-                                    value="<?php echo htmlspecialchars($jurusan['id']); ?>"
-                                    <?php echo in_array($jurusan['id'], $guruJurusan) ? 'checked' : ''; ?>
-                                    class="rounded border-gray-300 text-sky-500 focus:ring-sky-500">
-                                <label class="ml-2 text-sm text-gray-700">
-                                    <?php echo htmlspecialchars($jurusan['nama_jurusan']); ?>
-                                </label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Jurusan</label>
+                    <?php if (!empty($guru['jurusan'])): ?>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-600 mb-2">Jurusan Aktif Saat Ini:</p>
+                            <div class="flex flex-wrap gap-2">
+                                <?php foreach ($guru['jurusan'] as $jurusan): ?>
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                                        <?= htmlspecialchars($jurusan['nama']) ?>
+                                        (sejak <?= date('d/m/Y', strtotime($jurusan['tanggal_mulai'])) ?>)
+                                    </span>
+                                <?php endforeach; ?>
                             </div>
-                        <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div>
+                        <p class="text-sm text-gray-600 mb-2">Pilih Jurusan:</p>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <?php
+                            $query = "SELECT id, nama_jurusan FROM jurusan ORDER BY nama_jurusan";
+                            $stmt = $pdo->prepare($query);
+                            $stmt->execute();
+                            $daftarJurusan = $stmt->fetchAll();
+
+                            $guruJurusan = array_column($guru['jurusan'] ?? [], 'id');
+                            foreach ($daftarJurusan as $jurusan):
+                            ?>
+                                <div class="flex items-center bg-gray-50 p-3 rounded">
+                                    <input type="checkbox" name="jurusan[]"
+                                        value="<?php echo htmlspecialchars($jurusan['id']); ?>"
+                                        <?php echo in_array($jurusan['id'], $guruJurusan) ? 'checked' : ''; ?>
+                                        class="rounded border-gray-300 text-sky-500 focus:ring-sky-500">
+                                    <label class="ml-2 text-sm text-gray-700">
+                                        <?php echo htmlspecialchars($jurusan['nama_jurusan']); ?>
+                                    </label>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            * Perubahan jurusan akan tercatat dalam history tracking
+                        </p>
                     </div>
+                </div>
+
+                <!-- Additional Fields -->
+                <div id="trackingInfo" class="mb-6 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Alasan Perubahan Jurusan
+                    </label>
+                    <textarea name="change_reason" rows="2"
+                        class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="Berikan alasan perubahan jurusan..."></textarea>
                 </div>
 
                 <!-- Alamat -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Alamat</label>
                     <textarea name="alamat" rows="3"
-                        class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500"><?php echo htmlspecialchars($guru['alamat'] ?? ''); ?></textarea>
+                        class="w-full px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-sky-500"><?php
+                                                                                                                    echo htmlspecialchars($guru['alamat'] ?? ''); ?></textarea>
                 </div>
 
                 <!-- Foto -->
@@ -192,10 +235,12 @@ $daftarMapel = getAllMapel($pdo);
                 </div>
 
                 <div class="flex justify-end gap-4">
-                    <a href="dataGuru.php" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">
+                    <a href="dataGuru.php"
+                        class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">
                         Batal
                     </a>
-                    <button type="submit" class="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600">
+                    <button type="submit"
+                        class="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600">
                         Simpan Perubahan
                     </button>
                 </div>
@@ -205,6 +250,10 @@ $daftarMapel = getAllMapel($pdo);
 
     <script>
         $(document).ready(function() {
+            const originalJurusan = new Set($('input[name="jurusan[]"]:checked').map(function() {
+                return $(this).val();
+            }).get());
+
             // Handle status aktif change
             $('#statusAktif').change(function() {
                 const isNonAktif = $(this).val() === 'non-aktif';
@@ -216,6 +265,31 @@ $daftarMapel = getAllMapel($pdo);
                     $('input[name="tanggal_keluar"]').val('');
                     $('select[name="alasan_keluar"]').val('');
                     $('textarea[name="keterangan_keluar"]').val('');
+                }
+            });
+
+            // Track jurusan changes
+            $('input[name="jurusan[]"]').change(function() {
+                const currentJurusan = new Set($('input[name="jurusan[]"]:checked').map(function() {
+                    return $(this).val();
+                }).get());
+
+                // Check if there are any changes
+                let hasChanges = false;
+                if (currentJurusan.size !== originalJurusan.size) {
+                    hasChanges = true;
+                } else {
+                    currentJurusan.forEach(value => {
+                        if (!originalJurusan.has(value)) hasChanges = true;
+                    });
+                }
+
+                // Show/hide tracking info based on changes
+                $('#trackingInfo').toggle(hasChanges);
+                if (hasChanges) {
+                    $('textarea[name="change_reason"]').prop('required', true);
+                } else {
+                    $('textarea[name="change_reason"]').prop('required', false);
                 }
             });
 
@@ -235,6 +309,18 @@ $daftarMapel = getAllMapel($pdo);
                         });
                         return;
                     }
+                }
+
+                // Validasi alasan perubahan jurusan
+                const hasJurusanChanges = $('#trackingInfo').is(':visible');
+                if (hasJurusanChanges && !formData.get('change_reason').trim()) {
+                    $.toast({
+                        heading: 'Error',
+                        text: 'Mohon isi alasan perubahan jurusan',
+                        icon: 'error',
+                        position: 'top-right'
+                    });
+                    return;
                 }
 
                 $.ajax({

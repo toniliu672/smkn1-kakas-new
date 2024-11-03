@@ -7,13 +7,13 @@ require_once '../functions/helpers/dateIndonesia.php';
 check_login();
 
 $id = isset($_GET['id']) ? $_GET['id'] : null;
-$guru = null;
 $error = null;
+$guru = null;
 
 if (!$id) {
     $error = "ID guru tidak valid";
 } else {
-    $guru = getDetailGuru($pdo, $id);
+    $guru = getGuruDetailWithTracking($pdo, $id);
     if (!$guru) {
         $error = "Data guru tidak ditemukan";
     }
@@ -27,7 +27,6 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
 <?php include '../components/head.php'; ?>
 
 <body class="bg-gray-50">
-    <!-- Navbar dan Tombol hanya tampil saat mode normal -->
     <div class="no-print">
         <?php include '../components/navbar.php'; ?>
         <div class="container mx-auto max-w-5xl px-4 py-8">
@@ -38,6 +37,12 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
                         <i class="fas fa-arrow-left mr-2"></i>Kembali
                     </button>
+                    <?php if ($_SESSION['user_role'] === 'admin'): ?>
+                        <a href="editGuru.php?id=<?php echo $id; ?>"
+                            class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+                            <i class="fas fa-edit mr-2"></i>Edit
+                        </a>
+                    <?php endif; ?>
                     <button onclick="window.print()"
                         class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                         <i class="fas fa-print mr-2"></i>Cetak
@@ -47,7 +52,6 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
         </div>
     </div>
 
-    <!-- Konten yang akan dicetak -->
     <div class="container mx-auto max-w-5xl px-4">
         <?php if ($error): ?>
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded no-print">
@@ -55,11 +59,11 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
             </div>
         <?php elseif ($guru): ?>
             <!-- Data Guru -->
-            <div class="bg-white rounded-lg shadow-md p-6 print:shadow-none print:p-0">
-                <!-- Header -->
-                <div class="flex items-start gap-6 mb-8 print:mb-4">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <!-- Header & Info Utama -->
+                <div class="flex items-start gap-6 mb-8">
                     <!-- Foto Profil -->
-                    <div class="w-32 h-32 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 print:w-24 print:h-24">
+                    <div class="w-32 h-32 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
                         <?php if ($guru['foto']): ?>
                             <img src="../../<?= htmlspecialchars($guru['foto']) ?>"
                                 alt="Foto <?= htmlspecialchars($guru['nama_lengkap']) ?>"
@@ -73,242 +77,244 @@ $page_title = "Detail Guru - SMKN 1 Kakas";
 
                     <!-- Info Header -->
                     <div class="flex-grow">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-1 print:text-xl">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-1">
                             <?= htmlspecialchars($guru['nama_lengkap']) ?>
                         </h2>
-                        <p class="text-gray-600 mb-2 print:text-sm">
+                        <p class="text-gray-600 mb-2">
                             NIP: <?= $guru['nip'] ? htmlspecialchars($guru['nip']) : '-' ?>
                         </p>
-                        <div class="flex gap-2 print:gap-1">
-                            <span class="px-2 py-1 rounded text-sm <?= $guru['status'] === 'PNS' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' ?> print:text-xs">
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 rounded-full text-sm font-medium 
+                                <?= $guru['status'] === 'PNS' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' ?>">
                                 <?= htmlspecialchars($guru['status']) ?>
                             </span>
-                            <span class="px-2 py-1 rounded text-sm <?= $guru['status_aktif'] === 'aktif' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800' ?> print:text-xs">
+                            <span class="px-3 py-1 rounded-full text-sm font-medium 
+                                <?= $guru['status_aktif'] === 'aktif' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800' ?>">
                                 <?= ucfirst(htmlspecialchars($guru['status_aktif'])) ?>
                             </span>
-                            <?php if ($guru['status_aktif'] === 'non-aktif' && $guru['alasan_keluar']): ?>
-                                <span class="px-2 py-1 rounded text-sm bg-gray-100 text-gray-800 print:text-xs">
-                                    <?= ucfirst(str_replace('_', ' ', htmlspecialchars($guru['alasan_keluar']))) ?>
-                                </span>
-                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
 
-                <!-- Grid Informasi -->
-                <div class="grid grid-cols-1 gap-6 print:gap-4">
-                    <!-- Data Pribadi -->
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-4 print:text-sm print:mb-2 print:font-bold">Data Pribadi</h3>
-                        <table class="w-full print:text-sm">
-                            <tr>
-                                <td width="150" class="py-2 text-gray-600 print:py-1">Email</td>
-                                <td width="10" class="py-2 text-gray-600 print:py-1">:</td>
-                                <td class="py-2 text-gray-900 print:py-1"><?= $guru['email'] ? htmlspecialchars($guru['email']) : '-' ?></td>
-                            </tr>
-                            <tr>
-                                <td class="py-2 text-gray-600 print:py-1">Kontak</td>
-                                <td class="py-2 text-gray-600 print:py-1">:</td>
-                                <td class="py-2 text-gray-900 print:py-1"><?= $guru['kontak'] ? htmlspecialchars($guru['kontak']) : '-' ?></td>
-                            </tr>
-                            <tr>
-                                <td class="py-2 text-gray-600 print:py-1">Alamat</td>
-                                <td class="py-2 text-gray-600 print:py-1">:</td>
-                                <td class="py-2 text-gray-900 print:py-1"><?= $guru['alamat'] ? htmlspecialchars($guru['alamat']) : '-' ?></td>
-                            </tr>
-                        </table>
+                <!-- Data Pribadi -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Data Pribadi</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">Email</p>
+                            <p class="font-medium"><?= $guru['email'] ?: '-' ?></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Kontak</p>
+                            <p class="font-medium"><?= $guru['kontak'] ?: '-' ?></p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <p class="text-sm text-gray-600">Alamat</p>
+                            <p class="font-medium"><?= $guru['alamat'] ?: '-' ?></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Kepegawaian -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Status Kepegawaian</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">Tanggal Bergabung</p>
+                            <p class="font-medium"><?= formatTanggalIndonesia($guru['tanggal_bergabung']) ?></p>
+                        </div>
+                        <?php if ($guru['status_aktif'] === 'non-aktif'): ?>
+                            <div>
+                                <p class="text-sm text-gray-600">Tanggal Keluar</p>
+                                <p class="font-medium"><?= formatTanggalIndonesia($guru['tanggal_keluar']) ?></p>
+                            </div>
+                            <div class="md:col-span-2">
+                                <p class="text-sm text-gray-600">Alasan Keluar</p>
+                                <p class="font-medium">
+                                    <?= ucfirst(str_replace('_', ' ', $guru['alasan_keluar'])) ?>
+                                    <?php if ($guru['keterangan_keluar']): ?>
+                                        <br>
+                                        <span class="text-sm text-gray-600">
+                                            <?= htmlspecialchars($guru['keterangan_keluar']) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Mata Pelajaran -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Mata Pelajaran yang Diampu</h3>
+                    <?php if (!empty($guru['mata_pelajaran'])): ?>
+                        <div class="flex flex-wrap gap-2">
+                            <?php foreach ($guru['mata_pelajaran'] as $mapel): ?>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
+                                    <?= htmlspecialchars($mapel['nama']) ?>
+                                </span>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-gray-500 italic">Belum ada mata pelajaran yang diampu</p>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Jurusan & Tracking -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Riwayat Jurusan & Tracking</h3>
+
+                    <!-- Statistik Tracking -->
+                    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Total Perubahan</p>
+                                <p class="text-xl font-semibold">
+                                    <?= $guru['tracking_stats']['total_perubahan'] ?? 0 ?>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Jurusan Berbeda</p>
+                                <p class="text-xl font-semibold">
+                                    <?= $guru['tracking_stats']['jurusan_berbeda'] ?? 0 ?>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Jurusan Aktif</p>
+                                <p class="text-xl font-semibold">
+                                    <?= $guru['tracking_stats']['jurusan_aktif'] ?? 0 ?>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Awal Mengajar</p>
+                                <p class="text-xl font-semibold">
+                                    <?= $guru['tracking_stats']['awal_mengajar'] ?
+                                        date('d/m/Y', strtotime($guru['tracking_stats']['awal_mengajar'])) :
+                                        '-' ?>
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Data Kepegawaian -->
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-4 print:text-sm print:mb-2 print:font-bold">Data Kepegawaian</h3>
-                        <table class="w-full print:text-sm">
-                            <tr>
-                                <td width="150" class="py-2 text-gray-600 print:py-1">Status</td>
-                                <td width="10" class="py-2 text-gray-600 print:py-1">:</td>
-                                <td class="py-2 text-gray-900 print:py-1"><?= htmlspecialchars($guru['status']) ?></td>
-                            </tr>
-                            <tr>
-                                <td class="py-2 text-gray-600 print:py-1">Tanggal Bergabung</td>
-                                <td class="py-2 text-gray-600 print:py-1">:</td>
-                                <td class="py-2 text-gray-900 print:py-1"><?= formatTanggalIndonesia($guru['tanggal_bergabung']) ?></td>
-                            </tr>
-                            <?php if ($guru['status_aktif'] === 'non-aktif'): ?>
-                                <tr>
-                                    <td class="py-2 text-gray-600 print:py-1">Tanggal Keluar</td>
-                                    <td class="py-2 text-gray-600 print:py-1">:</td>
-                                    <td class="py-2 text-gray-900 print:py-1"><?= formatTanggalIndonesia($guru['tanggal_keluar']) ?></td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2 text-gray-600 print:py-1">Alasan Keluar</td>
-                                    <td class="py-2 text-gray-600 print:py-1">:</td>
-                                    <td class="py-2 text-gray-900 print:py-1">
-                                        <?= ucfirst(str_replace('_', ' ', htmlspecialchars($guru['alasan_keluar']))) ?>
-                                        <?php if ($guru['keterangan_keluar']): ?>
-                                            <br>
-                                            <span class="text-gray-600 text-sm">
-                                                Keterangan: <?= htmlspecialchars($guru['keterangan_keluar']) ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                            <tr>
-                                <td class="py-2 text-gray-600 print:py-1">Lama Bekerja</td>
-                                <td class="py-2 text-gray-600 print:py-1">:</td>
-                                <td class="py-2 text-gray-900 print:py-1">
-                                    <?php
-                                    $tanggal_bergabung = new DateTime($guru['tanggal_bergabung']);
-                                    $tanggal_akhir = $guru['status_aktif'] === 'non-aktif' ? new DateTime($guru['tanggal_keluar']) : new DateTime();
-                                    $interval = $tanggal_bergabung->diff($tanggal_akhir);
-                                    echo $interval->y . " tahun " . $interval->m . " bulan";
-                                    ?>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-
-                    <!-- Mata Pelajaran -->
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-4 print:text-sm print:mb-2 print:font-bold">
-                            <?= $guru['status_aktif'] === 'aktif' ? 'Mata Pelajaran yang Diajar' : 'Mata Pelajaran yang Pernah Diajar' ?>
-                        </h3>
-                        <?php if (!empty($guru['mata_pelajaran'])): ?>
+                    <!-- Jurusan Aktif -->
+                    <div class="mb-6">
+                        <h4 class="font-medium text-gray-800 mb-3">Jurusan Saat Ini</h4>
+                        <?php if (!empty($guru['jurusan'])): ?>
                             <div class="flex flex-wrap gap-2">
-                                <?php foreach ($guru['mata_pelajaran'] as $mapel): ?>
-                                    <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm print:text-xs print:bg-transparent print:px-0">
-                                        <?= htmlspecialchars($mapel['nama']) ?>
-                                        <?php if (next($guru['mata_pelajaran'])): ?>
-                                            <span class="print:inline hidden">,</span>
-                                        <?php endif; ?>
+                                <?php foreach ($guru['jurusan'] as $jurusan): ?>
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                                        <?= htmlspecialchars($jurusan['nama']) ?>
+                                        <span class="text-xs ml-1">
+                                            (sejak <?= date('d/m/Y', strtotime($jurusan['tanggal_mulai'])) ?>)
+                                        </span>
                                     </span>
                                 <?php endforeach; ?>
                             </div>
                         <?php else: ?>
-                            <p class="text-gray-500 italic print:text-sm">Tidak ada data mata pelajaran</p>
+                            <p class="text-gray-500 italic">Tidak ada jurusan aktif saat ini</p>
                         <?php endif; ?>
                     </div>
 
-                    <!-- Jurusan -->
+                    <!-- Riwayat Perubahan -->
                     <div>
-                        <h3 class="font-semibold text-gray-800 mb-4 print:text-sm print:mb-2 print:font-bold">
-                            <?= $guru['status_aktif'] === 'aktif' ? 'Jurusan yang Diampu' : 'Riwayat Jurusan' ?>
-                        </h3>
-                        <!-- Di bagian menampilkan jurusan -->
-                        <!-- Di bagian menampilkan jurusan pada detailGuru.php -->
-                        <?php if (!empty($guru['jurusan'])): ?>
-                            <div class="flex flex-col gap-4">
-                                <!-- Jurusan Aktif -->
-                                <div>
-                                    <h4 class="text-sm font-medium text-gray-700 mb-2">Jurusan Saat Ini:</h4>
-                                    <div class="flex flex-wrap gap-2">
-                                        <?php
-                                        $activeJurusan = array_filter($guru['jurusan'], function ($j) {
-                                            return $j['is_active'];
-                                        });
-
-                                        if (!empty($activeJurusan)):
-                                            foreach ($activeJurusan as $jurusan):
-                                        ?>
-                                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded text-sm">
-                                                    <?= htmlspecialchars($jurusan['nama']) ?>
-                                                </span>
-                                            <?php
-                                            endforeach;
-                                        else:
-                                            ?>
-                                            <span class="text-gray-500 italic text-sm">Tidak ada jurusan aktif</span>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-
-                                <!-- Riwayat Jurusan -->
-                                <div>
-                                    <h4 class="text-sm font-medium text-gray-700 mb-2">Riwayat Jurusan:</h4>
-                                    <div class="space-y-1">
-                                        <?php
-                                        $inactiveJurusan = array_filter($guru['jurusan'], function ($j) {
-                                            return !$j['is_active'];
-                                        });
-
-                                        if (!empty($inactiveJurusan)):
-                                            foreach ($inactiveJurusan as $jurusan):
-                                        ?>
-                                                <div class="text-sm text-gray-600">
-                                                    <span class="px-2 py-0.5 bg-gray-100 rounded">
-                                                        <?= htmlspecialchars($jurusan['nama']) ?>
+                        <h4 class="font-medium text-gray-800 mb-3">Riwayat Perubahan</h4>
+                        <?php if (!empty($guru['jurusan_history'])): ?>
+                            <div class="space-y-4">
+                                <?php foreach ($guru['jurusan_history'] as $trackingId => $history): ?>
+                                    <div class="border-l-4 border-gray-200 pl-4">
+                                        <div class="text-sm text-gray-600 mb-2">
+                                            Tracking ID: <?= htmlspecialchars($trackingId) ?>
+                                        </div>
+                                        <?php foreach ($history as $record): ?>
+                                            <div class="mb-2 last:mb-0">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-medium">
+                                                        <?= htmlspecialchars($record['nama']) ?>
                                                     </span>
-                                                    <span class="text-xs ml-2">
-                                                        (<?= date('d/m/Y', strtotime($jurusan['tanggal_mulai'])) ?> -
-                                                        <?= date('d/m/Y', strtotime($jurusan['tanggal_selesai'])) ?>)
+                                                    <span class="text-sm px-2 py-0.5 rounded-full 
+                                                        <?= getChangeTypeColor($record['change_type']) ?>">
+                                                        <?= formatChangeType($record['change_type']) ?>
                                                     </span>
                                                 </div>
-                                            <?php
-                                            endforeach;
-                                        else:
-                                            ?>
-                                            <span class="text-gray-500 italic text-sm">Tidak ada riwayat jurusan sebelumnya</span>
-                                        <?php endif; ?>
+                                                <div class="text-sm text-gray-600">
+                                                    <?= date('d/m/Y', strtotime($record['change_date'])) ?> -
+                                                    <?= $record['change_reason'] ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
-                                </div>
+                                <?php endforeach; ?>
                             </div>
                         <?php else: ?>
-                            <p class="text-gray-500 italic">Belum ada jurusan yang diampu</p>
+                            <p class="text-gray-500 italic">Belum ada riwayat perubahan</p>
                         <?php endif; ?>
                     </div>
-
                 </div>
             </div>
         <?php endif; ?>
     </div>
 
-    <!-- Print Styles -->
+    <?php
+    function getChangeTypeColor($type)
+    {
+        switch ($type) {
+            case 'INITIAL':
+                return 'bg-blue-100 text-blue-800';
+            case 'REASSIGNMENT':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'ADDITIONAL':
+                return 'bg-green-100 text-green-800';
+            case 'TERMINATION':
+                return 'bg-red-100 text-red-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    function formatChangeType($type)
+    {
+        switch ($type) {
+            case 'INITIAL':
+                return 'Penempatan Awal';
+            case 'REASSIGNMENT':
+                return 'Perpindahan';
+            case 'ADDITIONAL':
+                return 'Penambahan';
+            case 'TERMINATION':
+                return 'Pemberhentian';
+            default:
+                return $type;
+        }
+    }
+    ?>
+
     <style>
         @media print {
             @page {
                 size: A4;
-                margin: 1.5cm;
+                margin: 2cm;
             }
 
             body {
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
-                background: none;
-                font-size: 12pt;
             }
 
             .no-print {
                 display: none !important;
             }
 
-            .container {
-                max-width: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
+            .shadow-md {
+                box-shadow: none !important;
             }
 
             .bg-white {
                 background: none !important;
                 padding: 0 !important;
-                box-shadow: none !important;
-                border: none !important;
             }
 
-            table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-            }
-
-            td {
-                padding-top: 0.3em !important;
-                padding-bottom: 0.3em !important;
-                color: black !important;
-            }
-
-            h3 {
-                margin-bottom: 0.8em !important;
-                color: black !important;
-                font-size: 14pt !important;
+            .rounded-lg {
+                border-radius: 0 !important;
             }
         }
     </style>

@@ -56,6 +56,7 @@ $(document).ready(function () {
   });
 
   // Render tabel
+  // Render tabel dengan penambahan informasi tracking
   function renderTable(data) {
     const tbody = $("#dataTable tbody");
     tbody.empty();
@@ -63,7 +64,7 @@ $(document).ready(function () {
     if (!data || data.length === 0) {
       tbody.append(`
               <tr>
-                  <td colspan="7" class="px-4 py-3 text-center text-gray-500">
+                  <td colspan="8" class="px-4 py-3 text-center text-gray-500">
                       Tidak ada data ditemukan
                   </td>
               </tr>
@@ -74,6 +75,20 @@ $(document).ready(function () {
     data.forEach((item, index) => {
       const rowNumber = (currentPage - 1) * itemsPerPage + index + 1;
 
+      // Format jurusan dengan informasi tracking
+      const jurusanDisplay = item.jurusan_aktif
+        ? item.jurusan_aktif
+            .map(
+              (j) => `
+              <span class="inline-block px-2 py-1 bg-green-100 text-green-800 rounded text-sm mr-1 mb-1" 
+                    title="Sejak: ${j.tanggal_mulai}">
+                  ${j.nama}
+              </span>
+          `
+            )
+            .join("")
+        : "-";
+
       const row = `
               <tr class="hover:bg-gray-50">
                   <td class="px-4 py-3">${rowNumber}</td>
@@ -81,7 +96,6 @@ $(document).ready(function () {
                   <td class="px-4 py-3">${item.nama_lengkap}</td>
                   <td class="px-4 py-3">${item.kontak || "-"}</td>
                   <td class="px-4 py-3">${item.status}</td>
-
                   <td class="px-4 py-3">
                       <span class="px-2 py-1 rounded text-sm ${
                         item.status_aktif === "aktif"
@@ -96,18 +110,7 @@ $(document).ready(function () {
                       </span>
                   </td>
                   <td class="px-4 py-3">
-                      ${
-                        item.jurusan
-                          ? item.jurusan
-                              .map(
-                                (j) =>
-                                  `<span class="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm mr-1 mb-1">
-                              ${j.nama}
-                          </span>`
-                              )
-                              .join("")
-                          : "-"
-                      }
+                      ${jurusanDisplay}
                   </td>
                   <td class="px-4 py-3 text-center">
                       <a href="detailGuru.php?id=${item.id}" 
@@ -117,15 +120,15 @@ $(document).ready(function () {
                       ${
                         $("#userRole").val() === "admin"
                           ? `
-                          <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm mr-1" 
-                                  data-id="${item.id}">
-                              Edit
-                          </button>
-                          <button class="delete-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" 
-                                  data-id="${item.id}">
-                              Hapus
-                          </button>
-                      `
+                              <a href="editGuru.php?id=${item.id}"
+                                 class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm mr-1">
+                                  Edit
+                              </a>
+                              <button class="delete-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" 
+                                      data-id="${item.id}">
+                                  Hapus
+                              </button>
+                          `
                           : ""
                       }
                   </td>
@@ -216,11 +219,14 @@ $(document).ready(function () {
     });
   }
 
-  // Delete handler
+  // Delete handler dengan konfirmasi tambahan
   $(document).on("click", ".delete-btn", function () {
     const id = $(this).data("id");
+    const confirmDelete = confirm(
+      "Apakah Anda yakin ingin menghapus data ini?\nSemua history tracking juga akan dihapus."
+    );
 
-    if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+    if (confirmDelete) {
       $.ajax({
         url: "../functions/guru/",
         type: "POST",
