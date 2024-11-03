@@ -3,16 +3,27 @@ $(document).ready(function () {
   let currentPage = 1;
   let itemsPerPage = 10;
 
+  // Fungsi untuk mendapatkan semua filter aktif
+  function getActiveFilters() {
+    return {
+      search: $("#searchInput").val(),
+      status: $("select[data-filter='status']").val(),
+      status_aktif: $("select[data-filter='status_aktif']").val(),
+    };
+  }
+
   // Fungsi utama untuk memuat data
   function loadData() {
-    const searchTerm = $("#searchInput").val();
+    const filters = getActiveFilters();
 
     $.ajax({
       url: "../functions/guru/",
       type: "POST",
       data: {
         action: "getGuru",
-        search: searchTerm,
+        search: filters.search,
+        status: filters.status,
+        status_aktif: filters.status_aktif,
         page: currentPage,
         limit: itemsPerPage,
       },
@@ -30,6 +41,12 @@ $(document).ready(function () {
       },
     });
   }
+
+  // Event handler untuk filter
+  $(".filter-select").on("change", function () {
+    currentPage = 1; // Reset ke halaman pertama saat filter berubah
+    loadData();
+  });
 
   // Event handler untuk pencarian
   $("#searchInput").on(

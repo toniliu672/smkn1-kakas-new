@@ -3,7 +3,6 @@
 require_once __DIR__ . '/../../../config/koneksi.php';
 require_once __DIR__ . '/../../../auth/auth_check.php';
 
-// Import semua handler
 require_once __DIR__ . '/create.php';
 require_once __DIR__ . '/read.php';
 require_once __DIR__ . '/update.php';
@@ -11,11 +10,8 @@ require_once __DIR__ . '/delete.php';
 
 // Handler AJAX request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Set header untuk semua response
     header('Content-Type: application/json');
-
     $response = ['status' => 'error', 'message' => 'Invalid request'];
-
     $action = $_POST['action'] ?? '';
 
     try {
@@ -23,9 +19,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'getGuru':
                 $page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
                 $limit = isset($_POST['limit']) ? (int)$_POST['limit'] : 10;
-                $search = $_POST['search'] ?? [];
-                
-                $result = getGuru($pdo, $page, $limit, $search);
+
+                // Collect all filters
+                $filters = [
+                    'search' => $_POST['search'] ?? '',
+                    'status' => $_POST['status'] ?? '',
+                    'status_aktif' => $_POST['status_aktif'] ?? ''
+                ];
+
+                $result = getGuru($pdo, $page, $limit, $filters);
                 if ($result['status'] === 'success') {
                     $response = [
                         'status' => 'success',

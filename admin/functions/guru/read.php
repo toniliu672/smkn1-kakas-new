@@ -1,33 +1,45 @@
 <?php
 // admin/functions/guru/read.php
-function getGuru($pdo, $page = 1, $limit = 10, $search = '')
+function getGuru($pdo, $page = 1, $limit = 10, $filters = [])
 {
     try {
         $offset = ($page - 1) * $limit;
         $params = [];
         $where = ["1=1"];
 
-        // Tambahkan kondisi pencarian jika ada
-        if (!empty($search)) {
+        // Handle search term
+        if (!empty($filters['search'])) {
             $where[] = "(nama_lengkap LIKE ? OR nip LIKE ?)";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
+            $params[] = "%{$filters['search']}%";
+            $params[] = "%{$filters['search']}%";
+        }
+
+        // Handle status filter
+        if (!empty($filters['status']) && $filters['status'] !== 'Semua') {
+            $where[] = "status = ?";
+            $params[] = $filters['status'];
+        }
+
+        // Handle status_aktif filter
+        if (!empty($filters['status_aktif']) && $filters['status_aktif'] !== 'Semua') {
+            $where[] = "status_aktif = ?";
+            $params[] = $filters['status_aktif'];
         }
 
         $whereClause = implode(" AND ", $where);
 
-        // Query untuk data - PERBAIKAN: Hapus quotes di LIMIT OFFSET
-        $query = "SELECT id, nip, nama_lengkap, kontak, status, status_aktif 
+        // Query untuk data
+        $query = "SELECT id, nip, nama_lengkap, kontak, status, status_aktif, alasan_keluar 
                  FROM guru 
                  WHERE {$whereClause}
                  ORDER BY created_at DESC 
-                 LIMIT $limit OFFSET $offset";  // <- Perbaikan di sini
+                 LIMIT $limit OFFSET $offset";
 
         $stmt = $pdo->prepare($query);
         $stmt->execute($params);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Query untuk total (tidak perlu diubah karena tidak ada LIMIT/OFFSET)
+        // Query untuk total
         $countQuery = "SELECT COUNT(*) as total FROM guru WHERE {$whereClause}";
         $stmtCount = $pdo->prepare($countQuery);
         $stmtCount->execute($params);

@@ -49,6 +49,7 @@ $is_admin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
                             <th class="px-4 py-3 text-left">No</th>
                             <th class="px-4 py-3 text-left">Nama Jurusan</th>
                             <th class="px-4 py-3 text-center">Jumlah Siswa</th>
+                            <th class="px-4 py-3 text-center">Jumlah Guru</th>
                             <th class="px-4 py-3 text-center">Aksi</th>
                         </tr>
                     </thead>

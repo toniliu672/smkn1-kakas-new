@@ -75,6 +75,7 @@ function createChartComponent($pdo, $chartId, $title, $type = 'bar')
                     <option value="status">Status Kepegawaian</option>
                     <option value="keaktifan">Status Keaktifan</option>
                     <option value="mapel">Per Mata Pelajaran</option>
+                    <option value="jurusan">Per Jurusan</option>
                 </select>
             <?php endif; ?>
         </div>
