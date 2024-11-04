@@ -334,6 +334,15 @@ function approveSuratDisposisi($id, $keterangan = '')
     try {
         $pdo->beginTransaction();
 
+        // Get surat disposisi data first
+        $stmt = $pdo->prepare("SELECT file_surat FROM surat_disposisi WHERE id = ?");
+        $stmt->execute([$id]);
+        $suratDisposisi = $stmt->fetch();
+        
+        if (!$suratDisposisi) {
+            throw new Exception("Surat disposisi tidak ditemukan");
+        }
+
         // Update status surat disposisi
         $stmt = $pdo->prepare("
             UPDATE surat_disposisi 
@@ -352,17 +361,18 @@ function approveSuratDisposisi($id, $keterangan = '')
         $stmt = $pdo->prepare("
             INSERT INTO surat_masuk (
                 id, id_surat_disposisi, tanggal_persetujuan,
-                disetujui_oleh, keterangan_persetujuan
+                disetujui_oleh, keterangan_persetujuan, file_surat
             ) VALUES (
                 ?, ?, NOW(),
-                ?, ?
+                ?, ?, ?
             )
         ");
         $stmt->execute([
             $newId,
             $id,
             $_SESSION['user_id'],
-            $keterangan
+            $keterangan,
+            $suratDisposisi['file_surat']
         ]);
 
         $pdo->commit();
