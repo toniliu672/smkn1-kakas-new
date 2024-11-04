@@ -13,7 +13,7 @@ $page_title = "Surat Disposisi";
 <body class="bg-gray-50" data-user-role="<?php echo htmlspecialchars($_SESSION['user_role']); ?>">
     <?php include '../components/navbar.php'; ?>
 
-    <div class="p-4 sm:ml-64">
+    <div class="p-4">
         <div class="p-4 flex flex-col gap-4">
             <div class="bg-white p-4 rounded-lg shadow flex items-center justify-between">
                 <div>

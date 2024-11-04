@@ -232,12 +232,28 @@ function updateSuratDisposisi($id, $data, $file = null)
     global $pdo;
 
     try {
+        // Check current status
+        $stmt = $pdo->prepare("SELECT status FROM surat_disposisi WHERE id = ?");
+        $stmt->execute([$id]);
+        $currentStatus = $stmt->fetch()['status'];
+
+        // Only allow updates if status is 'pending' or 'rejected'
+        if ($currentStatus === 'approved') {
+            throw new Exception('Tidak dapat mengubah surat yang sudah disetujui');
+        }
+
         $updateFields = [
             'nomor_surat' => $data['nomor_surat'],
             'tanggal_surat' => $data['tanggal_surat'],
             'tanggal_diterima' => $data['tanggal_diterima'],
             'tujuan_surat' => $data['tujuan_surat']
         ];
+
+        // If surat was rejected and being resubmitted, reset status to pending
+        if ($currentStatus === 'rejected') {
+            $updateFields['status'] = 'pending';
+            $updateFields['keterangan'] = null; // Clear previous rejection reason
+        }
 
         // Handle file upload if new file is provided
         if ($file && $file['file_surat']['size'] > 0) {
@@ -265,9 +281,13 @@ function updateSuratDisposisi($id, $data, $file = null)
         $stmt = $pdo->prepare($sql);
         $result = $stmt->execute($params);
 
+        $message = $currentStatus === 'rejected' ? 
+            'Surat disposisi berhasil diupdate dan diajukan kembali' : 
+            'Surat disposisi berhasil diupdate';
+
         return [
             'status' => true,
-            'message' => 'Surat disposisi berhasil diupdate'
+            'message' => $message
         ];
     } catch (Exception $e) {
         return [
@@ -276,6 +296,7 @@ function updateSuratDisposisi($id, $data, $file = null)
         ];
     }
 }
+
 
 function deleteSuratDisposisi($id)
 {
@@ -359,21 +380,28 @@ function approveSuratDisposisi($id, $keterangan = '')
     }
 }
 
+
 function rejectSuratDisposisi($id, $keterangan = '')
 {
     global $pdo;
 
     try {
+        if (empty($keterangan)) {
+            throw new Exception('Keterangan penolakan harus diisi');
+        }
+
         $stmt = $pdo->prepare("
             UPDATE surat_disposisi 
-            SET status = 'rejected', keterangan = ? 
+            SET status = 'rejected', 
+                keterangan = ?,
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ");
         $result = $stmt->execute([$keterangan, $id]);
 
         return [
             'status' => true,
-            'message' => 'Surat disposisi berhasil ditolak'
+            'message' => 'Surat disposisi ditolak dan dikembalikan untuk revisi'
         ];
     } catch (Exception $e) {
         return [

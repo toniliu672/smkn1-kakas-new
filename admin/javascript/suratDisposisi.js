@@ -92,29 +92,73 @@ const uiHandlers = {
     getActionButtons(surat) {
         let buttons = "";
         
-        if (surat.status === "pending") {
-            if (document.body.dataset.userRole === "kepala_sekolah") {
+        // View button for file always shown
+        buttons += `
+            <a href="${surat.file_surat}" target="_blank" class="text-blue-600 hover:text-blue-800 mr-2" title="Lihat Surat">
+                <i class="fas fa-eye"></i>
+            </a>`;
+
+        if (surat.status === "pending" || surat.status === "rejected") {
+            if (["admin", "pengelola_surat"].includes(document.body.dataset.userRole)) {
                 buttons += `
-                    <button data-id="${surat.id}" class="approve-btn text-green-600 hover:text-green-800">
-                        <i class="fas fa-check"></i>
-                    </button>
-                    <button data-id="${surat.id}" class="reject-btn text-red-600 hover:text-red-800">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-            } else if (["admin", "pengelola_surat"].includes(document.body.dataset.userRole)) {
-                buttons += `
-                    <button data-id="${surat.id}" class="edit-btn text-yellow-600 hover:text-yellow-800 mr-2">
+                    <button data-id="${surat.id}" class="edit-btn text-yellow-600 hover:text-yellow-800 mr-2" title="Edit Surat">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button data-id="${surat.id}" class="delete-btn text-red-600 hover:text-red-800">
+                    <button data-id="${surat.id}" class="delete-btn text-red-600 hover:text-red-800 mr-2" title="Hapus Surat">
                         <i class="fas fa-trash"></i>
-                    </button>
-                `;
+                    </button>`;
             }
         }
         
+        if (surat.status === "pending" && document.body.dataset.userRole === "kepala_sekolah") {
+            buttons += `
+                <button data-id="${surat.id}" class="approve-btn text-green-600 hover:text-green-800 mr-2" title="Setujui Surat">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button data-id="${surat.id}" class="reject-btn text-red-600 hover:text-red-800" title="Tolak Surat">
+                    <i class="fas fa-times"></i>
+                </button>`;
+        }
+        
         return buttons;
+    },
+
+    populateTable(data) {
+        const tbody = DOM.table.querySelector("tbody");
+        tbody.innerHTML = "";
+
+        data.forEach((surat, index) => {
+            const row = document.createElement("tr");
+            // Add status-based styling
+            if (surat.status === 'rejected') {
+                row.classList.add('bg-red-50');
+            }
+
+            // Show rejection reason if exists
+            const statusCell = surat.status === 'rejected' ? 
+                `<div>
+                    ${utils.getStatusBadge(surat.status)}
+                    <p class="text-sm text-red-600 mt-1">Alasan: ${surat.keterangan || '-'}</p>
+                </div>` :
+                utils.getStatusBadge(surat.status);
+
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${index + 1}</td>
+                <td class="px-6 py-4">${surat.nomor_surat}</td>
+                <td class="px-6 py-4">${utils.formatDate(surat.tanggal_surat)}</td>
+                <td class="px-6 py-4">${utils.formatDate(surat.tanggal_diterima)}</td>
+                <td class="px-6 py-4">${surat.tujuan_surat}</td>
+                <td class="px-6 py-4">${statusCell}</td>
+                <td class="px-6 py-4">
+                    <div class="flex gap-2">
+                        ${this.getActionButtons(surat)}
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        eventListeners.attachActionButtons();
     },
 
     async loadTableData() {
@@ -129,34 +173,7 @@ const uiHandlers = {
                 headers: { "X-Requested-With": "XMLHttpRequest" }
             });
             const data = await response.json();
-    
-            const tbody = DOM.table.querySelector("tbody");
-            tbody.innerHTML = "";
-    
-            data.forEach((surat, index) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${index + 1}
-                    </td>
-                    <td class="px-6 py-4">${surat.nomor_surat}</td>
-                    <td class="px-6 py-4">${utils.formatDate(surat.tanggal_surat)}</td>
-                    <td class="px-6 py-4">${utils.formatDate(surat.tanggal_diterima)}</td>
-                    <td class="px-6 py-4">${surat.tujuan_surat}</td>
-                    <td class="px-6 py-4">${utils.getStatusBadge(surat.status)}</td>
-                    <td class="px-6 py-4">
-                        <div class="flex gap-2">
-                            <a href="${surat.file_surat}" target="_blank" class="text-blue-600 hover:text-blue-800">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            ${this.getActionButtons(surat)}
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-    
-            eventListeners.attachActionButtons();
+            this.populateTable(data);
         } catch (error) {
             console.error("Error:", error);
             utils.showToast("error", "Gagal memuat data: " + error.message);
@@ -219,55 +236,57 @@ const eventListeners = {
     },
 
     attachActionButtons() {
-        // Edit buttons
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                try {
-                    const response = await fetch(`../functions/surat-disposisi.php?action=get&id=${btn.dataset.id}`, {
-                        headers: { "X-Requested-With": "XMLHttpRequest" }
-                    });
-                    
-                    if (!response.ok) throw new Error('Gagal mengambil data');
-                    
-                    const data = await response.json();
-                    if (!data) throw new Error('Data tidak ditemukan');
-                    
-                    uiHandlers.populateEditForm(data);
-                    DOM.modal.surat.classList.remove('hidden');
-                } catch (error) {
-                    utils.showToast('error', 'Gagal memuat data surat: ' + error.message);
-                }
+        // Approve buttons
+        document.querySelectorAll('.approve-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('approvalAction').value = 'approve';
+                document.getElementById('approvalSuratId').value = btn.dataset.id;
+                document.getElementById('approvalTitle').textContent = 'Persetujuan Surat';
+                document.getElementById('approvalSubmit').className = 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md';
+                document.getElementById('approvalSubmit').textContent = 'Setujui';
+                DOM.modal.approval.classList.remove('hidden');
             });
         });
 
-        // Delete buttons
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                if (confirm('Apakah Anda yakin ingin menghapus surat ini?')) {
-                    const formData = new FormData();
-                    formData.append('action', 'delete');
-                    formData.append('id', btn.dataset.id);
-                    
-                    try {
-                        const response = await fetch('../functions/surat-disposisi.php', {
-                            method: 'POST',
-                            body: formData,
-                            headers: { "X-Requested-With": "XMLHttpRequest" }
-                        });
-                        const result = await response.json();
-                        
-                        if (result.status) {
-                            utils.showToast('success', result.message);
-                            uiHandlers.loadTableData();
-                        } else {
-                            throw new Error(result.message);
-                        }
-                    } catch (error) {
-                        utils.showToast('error', error.message);
-                    }
-                }
+        // Reject buttons
+        document.querySelectorAll('.reject-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('approvalAction').value = 'reject';
+                document.getElementById('approvalSuratId').value = btn.dataset.id;
+                document.getElementById('approvalTitle').textContent = 'Penolakan Surat';
+                document.getElementById('approvalSubmit').className = 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md';
+                document.getElementById('approvalSubmit').textContent = 'Tolak';
+                DOM.modal.approval.classList.remove('hidden');
             });
         });
+
+        // Form approval handler
+        if (DOM.form.approval) {
+            DOM.form.approval.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(DOM.form.approval);
+                const action = formData.get('action');
+                
+                try {
+                    const response = await fetch('../functions/surat-disposisi.php', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    });
+                    const result = await response.json();
+                    
+                    if (result.status) {
+                        utils.showToast('success', result.message);
+                        DOM.modal.approval.classList.add('hidden');
+                        uiHandlers.loadTableData();
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    utils.showToast('error', error.message);
+                }
+            });
+        }
     }
 };
 
