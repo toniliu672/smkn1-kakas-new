@@ -19,9 +19,10 @@ function check_admin()
     }
 }
 
-function check_surat_access() {
+function check_surat_access()
+{
     check_login();
-    if ($_SESSION['user_role'] !== 'admin' && $_SESSION['user_role'] !== 'pengelolaSurat') {
+    if (!in_array($_SESSION['user_role'], ['admin', 'pengelola_surat', 'kepala_sekolah'])) {
         header("Location: ../unauthorized.php");
         exit();
     }
@@ -39,7 +40,7 @@ function check_kepala_sekolah()
 function check_pengelola_surat()
 {
     check_login();
-    if ($_SESSION['user_role'] !== 'pengelolaSurat') {
+    if ($_SESSION['user_role'] !== 'pengelola_surat') {
         header("Location: ../unauthorized.php");
         exit();
     }

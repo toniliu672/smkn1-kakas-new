@@ -46,7 +46,7 @@ $page_title = "Dashboard - SMKN 1 Kakas";
 
     <!-- Menu Grid -->
     <div class="container mx-auto max-w-6xl px-4 -mt-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Data Siswa -->
             <a href="dataSiswa.php" class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
                 <div class="mb-4">
@@ -67,6 +67,17 @@ $page_title = "Dashboard - SMKN 1 Kakas";
                 </div>
                 <h3 class="text-lg font-semibold text-gray-800 mb-2">Data Guru</h3>
                 <p class="text-gray-600">Kelola data dan informasi guru</p>
+            </a>
+
+            <!-- Surat Disposisi -->
+            <a href="suratDisposisi.php" class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+                <div class="mb-4">
+                    <div class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-500 transition-colors">
+                        <i class="fas fa-envelope-open-text text-2xl text-purple-300"></i>
+                    </div>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Surat Disposisi</h3>
+                <p class="text-gray-600">Kelola arsip surat disposisi</p>
             </a>
 
             <!-- Surat Masuk -->
